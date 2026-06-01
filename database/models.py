@@ -26,10 +26,9 @@ class UserModel(Base):
 
 class SubscriptionModel(Base):
 	__tablename__ = 'subscriptions'
-	# Primary Key 
+	
 	user_id : Mapped[str] = mapped_column(String(50),ForeignKey('users.user_id',ondelete='CASCADE'),index=True,primary_key=True)
 
-	# other columns
 	status : Mapped[SubscriptionStatus] = mapped_column(Enum(SubscriptionStatus))
 	next_billing_date : Mapped[datetime] = mapped_column(DateTime(timezone=True),default= lambda : datetime.now(timezone.utc) + timedelta(days=7))
 
@@ -43,7 +42,6 @@ class RuleModel(Base):
    	UniqueConstraint("media_id", "catchphrase"),
 	)
 	
-	# Primary Key
 	id : Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
 
 	media_id: Mapped[str] = mapped_column(String(100),nullable=False,index=True)
@@ -64,7 +62,7 @@ class RuleModel(Base):
 class DMLogsModel(Base):
 	__tablename__ = 'dm_logs'
 
-	rule_id : Mapped[int] = mapped_column(Integer, ForeignKey('rules.id',ondelete='CASCADE'),index=True)
+	
 	id: Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
 	commenter_ig_id: Mapped[str] = mapped_column(String(100),nullable=False,index=True)
 	media_id: Mapped[str] = mapped_column(String(100),nullable=False,index=True)
@@ -72,4 +70,7 @@ class DMLogsModel(Base):
 	sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now())
 
 	#Foreign Keys
+	rule_id : Mapped[int] = mapped_column(Integer, ForeignKey('rules.id',ondelete='CASCADE'),index=True)
+
+	#Relationships
 	rule = Relationship('RuleModel',back_populates='dms')
