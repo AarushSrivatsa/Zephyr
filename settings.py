@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
@@ -8,3 +9,5 @@ if not DATABASE_URL:
 DEBUG = os.getenv('DEBUG').lower() == 'true'
 
 CLIENT_ID = os.getenv('CLIENT_ID')
+
+REDIRECT_URI = os.getenv('REDIRECT_URI')
