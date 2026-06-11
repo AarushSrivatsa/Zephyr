@@ -21,8 +21,9 @@ class UserModel(Base):
 	created_at : Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default= func.now())
 
 	# relationships
-	subscription = Relationship('SubscriptionModel',back_populates='user')
+	subscription = Relationship('SubscriptionModel',back_populates='user',uselist=False)
 	rules = Relationship('RuleModel',back_populates='user')
+	refresh_tokens = Relationship('RefreshTokenModel',back_populates='user')
 
 class SubscriptionModel(Base):
 	__tablename__ = 'subscriptions'
@@ -81,3 +82,16 @@ class DMLogsModel(Base):
 	#Relationships
 	rule = Relationship('RuleModel',back_populates='dms')
 
+class RefreshTokenModel(Base):
+    __tablename__ = 'refresh_tokens'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    token: Mapped[str] = mapped_column(Text, nullable=False, unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    # Foreign Keys
+    user_id: Mapped[str] = mapped_column(String(50), ForeignKey('users.user_id', ondelete='CASCADE'), index=True)
+
+    # Relationships
+    user = Relationship('UserModel', back_populates='refresh_tokens')

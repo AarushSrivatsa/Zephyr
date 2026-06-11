@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from routers.authentication import router as authentication_router
-from httpx import AsyncClient
 from contextlib import asynccontextmanager
+from utils.http_client import client
 
-client = AsyncClient()
 
 router_list = [authentication_router]
 

@@ -7,3 +7,5 @@ asyncpg
 slowapi
 alembic
 psycopg2 
+cryptography
+pyjwt
