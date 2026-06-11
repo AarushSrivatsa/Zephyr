@@ -5,10 +5,10 @@ from database.initialization import get_db
 from utils.http_client import client
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone, timedelta
-from database.models import UserModel
+from database.models import UserModel, RefreshTokenModel
 from utils.encryption import encrypt, decrypt
 from sqlalchemy import select
-from utils.tokens import create_refresh_token
+from utils.tokens import create_refresh_token, create_access_token
 
 router = APIRouter(prefix='/authentication',tags=['Authentication'])
 
@@ -88,5 +88,16 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
     await db.commit()
     
     new_refresh_token = create_refresh_token(user_data['user_id'])
-    
+    db.add(RefreshTokenModel(
+        token=new_refresh_token,
+        user_id=user_data['user_id'],
+        expires_at=datetime.now(timezone.utc) + timedelta(days=30)
+    ))
+    await db.commit()
+
+    return {
+        'access_token': create_access_token(user_data['user_id']),
+        'refresh_token': new_refresh_token,
+        'token_type': 'bearer'
+    }
 
