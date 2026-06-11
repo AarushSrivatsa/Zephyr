@@ -18,3 +18,14 @@ class Base(DeclarativeBase):
 	def __repr__(self):
           cols = {c.name: getattr(self, c.name) for c in self.__table__.columns}
           return f"{self.__class__.__name__}({cols})\n"
+
+async def get_db():
+     async with AsyncSessionLocal() as session:    
+        try:
+             yield session          
+             await session.commit()		      
+        except Exception:
+             await session.rollback()     
+             raise               
+        finally:
+             await session.close()  

@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
 from settings import CLIENT_ID, REDIRECT_URI
-from dependencies import get_db, get_http_client
+from database.initialization import get_db
+from main import client
+
 router = APIRouter(prefix='/authentication',tags=['Authentication'])
 
 @router.get('/login')
@@ -16,7 +18,7 @@ async def instagram_login():
     return RedirectResponse(auth_url)
 
 @router()
-async def instagram_callback(code : str, client = Depends(get_http_client)):
+async def instagram_callback(code : str):
         response = await client.post(
             'https://api.instagram.com/oauth/access_token',
             data={

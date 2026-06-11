@@ -64,7 +64,7 @@ class RuleModel(Base):
 
 class DMLogsModel(Base):
 	__tablename__ = 'dm_logs'
-	
+
 	__table_args__ = (
     	UniqueConstraint("commenter_ig_id", "rule_id"),
 	)
@@ -80,3 +80,4 @@ class DMLogsModel(Base):
 
 	#Relationships
 	rule = Relationship('RuleModel',back_populates='dms')
+
