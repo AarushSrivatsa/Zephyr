@@ -1,4 +1,4 @@
-from initialization import Base
+from database.initialization import Base
 from sqlalchemy.orm import Mapped, mapped_column, Relationship
 from sqlalchemy import String, DateTime, func, Text, ForeignKey, UniqueConstraint, Integer, Boolean
 from datetime import datetime, timezone, timedelta
@@ -43,11 +43,13 @@ class RuleModel(Base):
 	)
 	
 	id : Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
-
+	
+	link : Mapped[str] = mapped_column(String(100),nullable=False)
 	media_id: Mapped[str] = mapped_column(String(100),nullable=False,index=True)
 	catchphrase: Mapped[str] = mapped_column(String(100),nullable=False,index=True)
 	dm_message: Mapped[str] = mapped_column(Text,nullable=False)
 	reply_message: Mapped[Optional[str]] = mapped_column(Text,nullable=True,default=None)
+
 	is_active: Mapped[bool] = mapped_column(Boolean,default=True)
 	created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default=func.now())
 	count : Mapped[int] = mapped_column(Integer, server_default='0')
