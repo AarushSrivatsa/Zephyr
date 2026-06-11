@@ -32,6 +32,7 @@ class SubscriptionModel(Base):
 	status : Mapped[SubscriptionStatus] = mapped_column(Enum(SubscriptionStatus))
 	next_billing_date : Mapped[datetime] = mapped_column(DateTime(timezone=True),default= lambda : datetime.now(timezone.utc) + timedelta(days=7))
 
+
 	#relationships
 	user = Relationship('UserModel',back_populates='subscription',passive_deletes=True)
 
@@ -43,7 +44,7 @@ class RuleModel(Base):
 	)
 	
 	id : Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
-	
+
 	link : Mapped[str] = mapped_column(String(100),nullable=False)
 	media_id: Mapped[str] = mapped_column(String(100),nullable=False,index=True)
 	catchphrase: Mapped[str] = mapped_column(String(100),nullable=False,index=True)
@@ -63,7 +64,10 @@ class RuleModel(Base):
 
 class DMLogsModel(Base):
 	__tablename__ = 'dm_logs'
-
+	
+	__table_args__ = (
+    	UniqueConstraint("commenter_ig_id", "rule_id"),
+	)
 	
 	id: Mapped[int] = mapped_column(Integer,primary_key=True,autoincrement=True)
 	commenter_ig_id: Mapped[str] = mapped_column(String(100),nullable=False,index=True)
