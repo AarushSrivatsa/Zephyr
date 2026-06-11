@@ -8,12 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.initialization import get_db
 from database.models import UserModel
 from sqlalchemy import select
+from settings import ACCESS_TOKEN_EXPIRE_HOURS, REFRESH_TOKEN_EXPIRE_DAYS
 
 def create_access_token(user_id: str) -> str:
     payload = {
         'user_id': user_id,
         'type': 'access',
-        'exp': datetime.now(timezone.utc) + timedelta(minutes=15)
+        'exp': datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     }
     return encode(payload, JWT_SECRET, algorithm='HS256')
 
@@ -21,7 +22,7 @@ def create_refresh_token(user_id: str) -> str:
     payload = {
         'user_id': user_id,
         'type': 'refresh',
-        'exp': datetime.now(timezone.utc) + timedelta(days=30)
+        'exp': datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     }
     
     return encode(payload, JWT_REFRESH_SECRET, algorithm='HS256')
@@ -45,6 +46,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(b
 
     result = await db.execute(select(UserModel).where(UserModel.user_id == payload['user_id']))
     user = result.scalar_one_or_none()
+    
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
     return user

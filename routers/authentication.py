@@ -9,6 +9,7 @@ from database.models import UserModel, RefreshTokenModel
 from utils.encryption import encrypt, decrypt
 from sqlalchemy import select
 from utils.tokens import create_refresh_token, create_access_token
+from settings import REFRESH_TOKEN_EXPIRE_DAYS
 
 router = APIRouter(prefix='/authentication',tags=['Authentication'])
 
@@ -84,15 +85,15 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
             encrypted_access_token=encrypted_token,
             token_expires_at=token_expires_at
         ))        
-
-    await db.commit()
     
     new_refresh_token = create_refresh_token(user_data['user_id'])
+    
     db.add(RefreshTokenModel(
         token=new_refresh_token,
         user_id=user_data['user_id'],
-        expires_at=datetime.now(timezone.utc) + timedelta(days=30)
+        expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     ))
+    
     await db.commit()
 
     return {
