@@ -26,6 +26,7 @@ async def instagram_login():
         f"&response_type=code"
         f"&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights"
     )
+    
     return RedirectResponse(auth_url)
 
 @router.get('/instagram_callback')
@@ -103,8 +104,6 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
         user_id=user_data['user_id'],
         expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     ))
-    
-    await db.commit()
 
     return {
         'access_token': create_access_token(user_data['user_id']),
@@ -137,8 +136,6 @@ async def refresh(refresh_token: str, db: AsyncSession = Depends(get_db)):
         expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     ))
 
-    await db.commit()
-
     return {
         'access_token': create_access_token(payload['user_id']),
         'refresh_token': new_refresh_token,
@@ -147,11 +144,12 @@ async def refresh(refresh_token: str, db: AsyncSession = Depends(get_db)):
 
 @router.post('/logout')
 async def logout(refresh_token: str, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
+    
     await db.execute(delete(RefreshTokenModel).where(
         RefreshTokenModel.token == refresh_token,
         RefreshTokenModel.user_id == user.user_id
     ))
-    await db.commit()
+    
     return {'message': 'Logged out successfully'}
 
 
