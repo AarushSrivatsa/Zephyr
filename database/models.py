@@ -16,9 +16,11 @@ class UserModel(Base):
 	user_id : Mapped[str] = mapped_column(String(50),primary_key=True, index=True)
 	username : Mapped[str] = mapped_column(String(50))
 	profile_pic_url : Mapped[str] = mapped_column(Text)
-	encrypted_access_token : Mapped[str] = mapped_column(Text)
-	token_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 	created_at : Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default= func.now())
+
+	#instagram columns
+	encrypted_instagram_access_token : Mapped[str] = mapped_column(Text)
+	instagram_token_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 	# relationships
 	subscription = Relationship('SubscriptionModel',back_populates='user',uselist=False)
@@ -28,6 +30,7 @@ class UserModel(Base):
 class SubscriptionModel(Base):
 	__tablename__ = 'subscriptions'
 	
+	# primary key
 	user_id : Mapped[str] = mapped_column(String(50),ForeignKey('users.user_id',ondelete='CASCADE'),index=True,primary_key=True)
 
 	status : Mapped[SubscriptionStatus] = mapped_column(Enum(SubscriptionStatus))

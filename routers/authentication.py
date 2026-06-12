@@ -5,7 +5,7 @@ from database.initialization import get_db
 from utils.http_client import client
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone, timedelta
-from database.models import UserModel, RefreshTokenModel
+from database.models import UserModel, RefreshTokenModel, SubscriptionModel, SubscriptionStatus
 from utils.encryption import encrypt, decrypt
 from sqlalchemy import select
 from utils.tokens import create_refresh_token, create_access_token, decode_refresh_token
@@ -56,7 +56,7 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
 
     long_lived_data = long_lived_response.json()
     long_lived_token = long_lived_data['access_token']
-    expires_in = long_lived_data['expires_in']
+    expires_in_seconds = long_lived_data['expires_in']
     
 	# Step 3: Fetch user info
     user_response = await client.get(
@@ -70,15 +70,15 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
     
     # Step 4: Encrypt token
     encrypted_token = encrypt(long_lived_token)
-    token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+    token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in_seconds)
 
     # Step 5: Upsert user
     result = await db.execute(select(UserModel).where(UserModel.user_id == user_data['user_id']))
     existing_user = result.scalar_one_or_none()
     
     if existing_user:
-        existing_user.encrypted_access_token = encrypted_token
-        existing_user.token_expires_at = token_expires_at
+        existing_user.encrypted_instagram_access_token = encrypted_token
+        existing_user.instagram_token_expires_at = token_expires_at
         existing_user.username = user_data['username']
         existing_user.profile_pic_url = user_data['profile_picture_url']
     else:
@@ -86,9 +86,15 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
             user_id=user_data['user_id'],
             username=user_data['username'],
             profile_pic_url=user_data['profile_picture_url'],
-            encrypted_access_token=encrypted_token,
-            token_expires_at=token_expires_at
-        ))        
+            encrypted_instagram_access_token=encrypted_token,
+            instagram_token_expires_at=token_expires_at
+        ))
+        # Step 6: Create user and subscription if first time user
+        db.add(SubscriptionModel(
+            user_id=user_data['user_id'],
+            status=SubscriptionStatus.active,
+            next_billing_date=datetime.now(timezone.utc) + timedelta(days=7)
+        ))
     
     new_refresh_token = create_refresh_token(user_data['user_id'])
     

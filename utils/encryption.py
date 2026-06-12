@@ -1,4 +1,4 @@
-# utils/encryption.py
+# used primarily to encrypt and decrypt instagram token
 from cryptography.fernet import Fernet
 from settings import ENCRYPTION_KEY
 
