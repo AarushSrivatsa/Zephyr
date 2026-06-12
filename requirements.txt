@@ -6,6 +6,6 @@ httpx
 asyncpg
 slowapi
 alembic
-psycopg2 
+psycopg2-binary
 cryptography
 pyjwt
