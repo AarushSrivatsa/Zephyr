@@ -1,5 +1,5 @@
 from jwt import encode, decode
-from settings import JWT_SECRET, JWT_REFRESH_SECRET
+from settings import JWT_ACCESS_SECRET, JWT_REFRESH_SECRET
 from datetime import datetime, timezone, timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -16,7 +16,7 @@ def create_access_token(user_id: str) -> str:
         'type': 'access',
         'exp': datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     }
-    return encode(payload, JWT_SECRET, algorithm='HS256')
+    return encode(payload, JWT_ACCESS_SECRET, algorithm='HS256')
 
 def create_refresh_token(user_id: str) -> str:
     payload = {
@@ -29,7 +29,7 @@ def create_refresh_token(user_id: str) -> str:
 
 def decode_access_token(token: str) -> dict:
     try:
-        return decode(token, JWT_SECRET, algorithms=['HS256'])
+        return decode(token, JWT_ACCESS_SECRET, algorithms=['HS256'])
     except ExpiredSignatureError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Access token expired')
     except InvalidTokenError:
