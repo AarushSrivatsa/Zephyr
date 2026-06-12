@@ -101,4 +101,3 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
         'refresh_token': new_refresh_token,
         'token_type': 'bearer'
     }
-
