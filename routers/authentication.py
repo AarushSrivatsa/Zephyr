@@ -13,6 +13,7 @@ from settings import REFRESH_TOKEN_EXPIRE_DAYS
 from sqlalchemy import delete
 from fastapi import status
 from fastapi.exceptions import HTTPException
+from utils.tokens import get_current_user
 
 router = APIRouter(prefix='/authentication',tags=['Authentication'])
 
@@ -137,5 +138,14 @@ async def refresh(refresh_token: str, db: AsyncSession = Depends(get_db)):
         'refresh_token': new_refresh_token,
         'token_type': 'bearer'
     }
+
+@router.post('/logout')
+async def logout(refresh_token: str, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
+    await db.execute(delete(RefreshTokenModel).where(
+        RefreshTokenModel.token == refresh_token,
+        RefreshTokenModel.user_id == user.user_id
+    ))
+    await db.commit()
+    return {'message': 'Logged out successfully'}
 
 
