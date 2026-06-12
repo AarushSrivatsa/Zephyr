@@ -24,7 +24,7 @@ async def instagram_login():
         f"?client_id={CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
         f"&response_type=code"
-        f"&scope=instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments"
+        f"&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights"
     )
     return RedirectResponse(auth_url)
 
