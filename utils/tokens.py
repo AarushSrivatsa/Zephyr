@@ -28,22 +28,27 @@ def create_refresh_token(user_id: str) -> str:
     return encode(payload, JWT_REFRESH_SECRET, algorithm='HS256')
 
 def decode_access_token(token: str) -> dict:
-    return decode(token, JWT_SECRET, algorithms=['HS256'])
+    try:
+        return decode(token, JWT_SECRET, algorithms=['HS256'])
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Access token expired')
+    except InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid access token')
 
 def decode_refresh_token(token: str) -> dict:
-    return decode(token, JWT_REFRESH_SECRET, algorithms=['HS256'])
+    try:
+        return decode(token, JWT_REFRESH_SECRET, algorithms=['HS256'])
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Refresh token expired')
+    except InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid refresh token')
 
 bearer_scheme = HTTPBearer()
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme), db: AsyncSession = Depends(get_db)):
     token = credentials.credentials
-    try:
-        payload = decode_access_token(token)
-    except ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token expired')
-    except InvalidTokenError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid token')
-
+    payload = decode_access_token(token)
+    
     result = await db.execute(select(UserModel).where(UserModel.user_id == payload['user_id']))
     user = result.scalar_one_or_none()
     

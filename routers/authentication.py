@@ -8,8 +8,11 @@ from datetime import datetime, timezone, timedelta
 from database.models import UserModel, RefreshTokenModel
 from utils.encryption import encrypt, decrypt
 from sqlalchemy import select
-from utils.tokens import create_refresh_token, create_access_token
+from utils.tokens import create_refresh_token, create_access_token, decode_refresh_token
 from settings import REFRESH_TOKEN_EXPIRE_DAYS
+from sqlalchemy import delete
+from fastapi import status
+from fastapi.exceptions import HTTPException
 
 router = APIRouter(prefix='/authentication',tags=['Authentication'])
 
@@ -101,3 +104,37 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
         'refresh_token': new_refresh_token,
         'token_type': 'bearer'
     }
+
+@router.post('/refresh')
+async def refresh(refresh_token: str, db: AsyncSession = Depends(get_db)):
+    
+    payload = decode_refresh_token(refresh_token)
+
+    result = await db.execute(select(RefreshTokenModel).where(RefreshTokenModel.token == refresh_token))
+    db_token = result.scalar_one_or_none()
+    
+	# db token not found but someones trying to use it, log user out completely for safety
+    if not db_token:
+        await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.user_id == payload['user_id']))
+        await db.commit()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Refresh token reuse detected')
+    
+	# deleting old refresh token
+    await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.token == refresh_token))
+    
+	# creating new refresh token
+    new_refresh_token = create_refresh_token(payload['user_id'])
+    db.add(RefreshTokenModel(
+        token=new_refresh_token,
+        user_id=payload['user_id'],
+        expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    ))
+
+    await db.commit()
+
+    return {
+        'access_token': create_access_token(payload['user_id']),
+        'refresh_token': new_refresh_token,
+        'token_type': 'bearer'
+    }
+
