@@ -12,8 +12,6 @@ async def lifespan(app: FastAPI):
     yield
     await client.aclose()
 
-router_list = [authentication_router]
-
 app = FastAPI(title='Comment2DM Automation',)
 
 for router in router_list:
