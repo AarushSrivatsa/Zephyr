@@ -151,5 +151,3 @@ async def logout(refresh_token: str, db: AsyncSession = Depends(get_db), user: U
     ))
     
     return {'message': 'Logged out successfully'}
-
-

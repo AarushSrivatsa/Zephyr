@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, HTTPException, status
+from fastapi import APIRouter, Query, HTTPException, status, Request
 from fastapi.responses import PlainTextResponse
 from settings import VERIFY_TOKEN
 
@@ -14,3 +14,8 @@ async def verify_webhook(
         return PlainTextResponse(content=str(hub_challenge))
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Verification failed')
 
+@router.post('')
+async def receive_webhook(request: Request):
+    payload = await request.json()
+    print(payload)  # for now, just see what comes in
+    return {"status": "ok"}

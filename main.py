@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from routers.authentication import router as authentication_router
+from routers.webhook import router as webhook_router
 from contextlib import asynccontextmanager
 from utils.http_client import client
 
