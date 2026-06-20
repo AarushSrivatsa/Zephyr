@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from utils.http_client import client
 
 
-router_list = [authentication_router]
+router_list = [authentication_router,webhook_router]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
