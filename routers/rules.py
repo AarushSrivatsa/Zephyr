@@ -20,7 +20,6 @@ class RuleCreate(BaseModel):
 class RuleResponse(BaseModel):
     id: int
     link: str
-    media_id: str
     catchphrase: str
     dm_message: str
     reply_message: str | None
