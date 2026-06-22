@@ -5,8 +5,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from database.initialization import get_db
-from database.models import UserModel
+from database.models import UserModel, SubscriptionStatus
 from sqlalchemy import select
 from settings import ACCESS_TOKEN_EXPIRE_HOURS, REFRESH_TOKEN_EXPIRE_DAYS
 
@@ -49,9 +50,18 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(b
     token = credentials.credentials
     payload = decode_access_token(token)
     
-    result = await db.execute(select(UserModel).where(UserModel.user_id == payload['user_id']))
+    result = await db.execute(
+    select(UserModel)
+    .options(selectinload(UserModel.subscription))
+    .where(UserModel.user_id == payload['user_id']))
+    
     user = result.scalar_one_or_none()
     
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
+    
+    subscription = user.subscription
+    if not subscription or subscription.status == SubscriptionStatus.inactive or subscription.next_billing_date < datetime.now(timezone.utc):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='No active subscription')
+
     return user
