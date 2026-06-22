@@ -6,10 +6,6 @@ from sqlalchemy import Enum
 from typing import Optional
 import enum
 
-class SubscriptionStatus(enum.Enum):
-    active = "active"
-    inactive = "inactive"
-
 class UserModel(Base):
 	__tablename__ = 'users'
 	# individual columns
@@ -33,9 +29,7 @@ class SubscriptionModel(Base):
 	# primary key
 	user_id : Mapped[str] = mapped_column(String(50),ForeignKey('users.user_id',ondelete='CASCADE'),index=True,primary_key=True)
 
-	status : Mapped[SubscriptionStatus] = mapped_column(Enum(SubscriptionStatus))
 	next_billing_date : Mapped[datetime] = mapped_column(DateTime(timezone=True),default= lambda : datetime.now(timezone.utc) + timedelta(days=7))
-
 
 	#relationships
 	user = Relationship('UserModel',back_populates='subscription',passive_deletes=True)
