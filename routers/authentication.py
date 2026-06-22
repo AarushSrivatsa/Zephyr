@@ -43,7 +43,6 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
         }
     )
     short_lived_data = short_lived_response.json()
-    print(short_lived_data)
     short_lived_token = short_lived_data['access_token']
 	
 	# Step 2: Exchange for long-lived token

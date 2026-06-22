@@ -45,6 +45,7 @@ async def create_rule(rule: RuleCreate, db: AsyncSession = Depends(get_db), user
         user_id=user.user_id)
     
     db.add(new_rule)
+    await db.refresh(new_rule)
     
     return new_rule
 
