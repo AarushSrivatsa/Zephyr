@@ -15,7 +15,6 @@ class RuleCreate(BaseModel):
     catchphrase: str
     dm_message: str
     reply_message: str | None = None
-    
 
 class RuleResponse(BaseModel):
     id: int
@@ -87,6 +86,9 @@ async def update_rule(rule_id: int, rule_update: RuleUpdate, db: AsyncSession = 
 
     for field, value in update_data.items():
         setattr(rule, field, value)
+    
+    await db.flush()
+    await db.refresh(rule)
 
     return rule
 
