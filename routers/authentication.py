@@ -93,7 +93,6 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
         # Step 6: Create user and subscription if first time user
         db.add(SubscriptionModel(
             user_id=user_data['user_id'],
-            status=SubscriptionStatus.active,
             next_billing_date=datetime.now(timezone.utc) + timedelta(days=7)
         ))
     
@@ -104,6 +103,14 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
         user_id=user_data['user_id'],
         expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     ))
+    
+    await client.post(
+    f'https://graph.instagram.com/v25.0/{user_data["user_id"]}/subscribed_apps',
+    params={
+        'subscribed_fields': 'comments,messages',
+        'access_token': long_lived_token
+    }
+)
 
     return {
         'access_token': create_access_token(user_data['user_id']),

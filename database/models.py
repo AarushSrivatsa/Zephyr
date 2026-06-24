@@ -8,11 +8,13 @@ import enum
 
 class UserModel(Base):
 	__tablename__ = 'users'
+
 	# individual columns
 	user_id : Mapped[str] = mapped_column(String(50),primary_key=True, index=True)
 	username : Mapped[str] = mapped_column(String(50))
 	profile_pic_url : Mapped[str] = mapped_column(Text)
 	created_at : Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default= func.now())
+	deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
 
 	#instagram columns
 	encrypted_instagram_access_token : Mapped[str] = mapped_column(Text)
