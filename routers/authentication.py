@@ -5,7 +5,7 @@ from database.initialization import get_db
 from utils.http_client import client
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone, timedelta
-from database.models import UserModel, RefreshTokenModel, SubscriptionModel, SubscriptionStatus
+from database.models import UserModel, RefreshTokenModel, SubscriptionModel
 from utils.encryption import encrypt, decrypt
 from sqlalchemy import select
 from utils.tokens import create_refresh_token, create_access_token, decode_refresh_token
