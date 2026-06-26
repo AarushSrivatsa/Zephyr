@@ -7,7 +7,7 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from database.initialization import get_db
-from database.models import UserModel, SubscriptionStatus
+from database.models import UserModel
 from sqlalchemy import select
 from settings import ACCESS_TOKEN_EXPIRE_HOURS, REFRESH_TOKEN_EXPIRE_DAYS
 

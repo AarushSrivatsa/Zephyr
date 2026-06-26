@@ -5,8 +5,9 @@ from utils.http_client import client
 from routers.authentication import router as authentication_router
 from routers.webhook import router as webhook_router
 from routers.rules import router as rules_router
+from routers.compliance import router as compliance_router
 
-router_list = [authentication_router,webhook_router,rules_router]
+router_list = [authentication_router,webhook_router,rules_router,compliance_router]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
