@@ -50,8 +50,9 @@ async def create_rule(rule: RuleCreate, db: AsyncSession = Depends(get_db), user
     return new_rule
 
 @router.get('',response_model=list[RuleResponse])
-async def list_rules(db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
-    result = await db.execute(select(RuleModel).where(RuleModel.user_id == user.user_id))
+async def list_rules(page : int = 1, limit : int = 10, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
+    offset = (page - 1) * limit
+    result = await db.execute(select(RuleModel).where(RuleModel.user_id == user.user_id)).offset(offset).limit(limit)
     rules = result.scalars().all()
     return rules
 
