@@ -7,7 +7,7 @@ from routers.instagram_interaction import router as webhook_router
 from routers.rules import router as rules_router
 from routers.compliance import router as compliance_router
 
-router_list = [authentication_router,webhook_router,rules_router,compliance_router]
+router_list = [authentication_router,webhook_router,rules_router,compliance_router,payments_router]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
