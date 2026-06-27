@@ -21,4 +21,5 @@ JWT_REFRESH_SECRET = os.getenv('JWT_REFRESH_SECRET')
 
 VERIFY_TOKEN = os.getenv('VERIFY_TOKEN')
 
+DODO_API_KEY = os.getenv('DODO_API_KEY')
 

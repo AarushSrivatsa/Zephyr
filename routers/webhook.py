@@ -12,7 +12,7 @@ from utils.instagram_helper_functions import send_dm,send_reply
 
 router = APIRouter(prefix='/webhooks', tags=['Webhooks'])
 
-@router.get('')
+@router.get('/instagram')
 async def verify_webhook(
     hub_mode: str = Query(alias='hub.mode'),
     hub_challenge: int = Query(alias='hub.challenge'),
@@ -22,7 +22,7 @@ async def verify_webhook(
         return PlainTextResponse(content=str(hub_challenge))
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Verification failed')
 
-@router.post('')
+@router.post('/instagram')
 async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     data = await request.json()
 
@@ -101,3 +101,4 @@ async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         return {'status': 'ok'}
 
     return {'status': 'ok'}
+
