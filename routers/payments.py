@@ -6,7 +6,7 @@ from database.initialization import get_db
 from database.models import SubscriptionModel, UserModel
 from utils.dodo_client import dodo
 from utils.tokens import get_current_user
-from settings import DODO_PRODUCT_ID
+from settings import DODO_PRODUCT_ID, DODO_WEBHOOK_SECRET
 from datetime import datetime, timezone
 
 router = APIRouter(prefix='/payments', tags=['Payments'])
