@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.initialization import get_db
+from sqlalchemy import delete, update, select
+from database.models import UserModel, RuleModel, DMLogsModel, RefreshTokenModel
+from datetime import datetime, timezone
 import hashlib
 import hmac
 import base64
@@ -9,7 +12,15 @@ from settings import CLIENT_SECRET
 
 router = APIRouter(prefix='/compliance', tags=['Compliance'])
 
-def verify_signed_request(signed_request: str) -> dict:
+@router.post('/deletion')
+async def data_deletion(request: Request, db: AsyncSession = Depends(get_db)):
+    # get signed request from form data
+    form_data = await request.form()
+    signed_request = form_data.get('signed_request')
+    
+    if not signed_request:
+        raise HTTPException(status_code=400, detail='Missing signed request')
+    
     encoded_sig, payload = signed_request.split('.')
     
     # Fix padding
@@ -30,21 +41,50 @@ def verify_signed_request(signed_request: str) -> dict:
     if not hmac.compare_digest(expected_sig, sig):
         raise HTTPException(status_code=403, detail='Invalid signature')
     
-    return data
-
-@router.post('/deletion')
-async def data_deletion(request: Request, db: AsyncSession = Depends(get_db)):
-    # get signed request from form data
-    form_data = await request.form()
-    signed_request = form_data.get('signed_request')
-    
-    if not signed_request:
-        raise HTTPException(status_code=400, detail='Missing signed request')
-    
-    data = verify_signed_request(signed_request)
-    
-	
     user_id = data.get('user_id')
     if not user_id:
         raise HTTPException(status_code=400, detail='Missing user_id')
     
+
+    # Delete refresh tokens
+    await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.user_id == user_id))
+    
+    # Delete DM logs
+    await db.execute(delete(DMLogsModel).where(DMLogsModel.rule_id.in_(
+        select(RuleModel.id).where(RuleModel.user_id == user_id)
+    )))
+    
+    # Delete rules
+    await db.execute(delete(RuleModel).where(RuleModel.user_id == user_id))
+    
+    # Null out Instagram token and mark deleted
+    await db.execute(
+        update(UserModel)
+        .where(UserModel.user_id == user_id)
+        .values(
+            encrypted_instagram_access_token=None,
+            deleted_at=datetime.now(timezone.utc)
+        )
+    )
+    
+    confirmation_code = f'zephyr_{user_id}_{int(datetime.now().timestamp())}'
+    
+    return {
+        'url': f'https://zephyr-m5w7.onrender.com/compliance/deletion-status?code={confirmation_code}',
+        'confirmation_code': confirmation_code
+    }
+
+@router.get('/deletion-status')
+async def deletion_status(code: str, db: AsyncSession = Depends(get_db)):
+    try:
+        user_id = code.split('_')[1]
+    except:
+        raise HTTPException(status_code=400, detail='Invalid code')
+
+    result = await db.execute(select(UserModel).where(UserModel.user_id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user or not user.deleted_at:
+        raise HTTPException(status_code=404, detail='No deletion request found')
+
+    return {'code': code, 'status': 'deleted', 'deleted_at': user.deleted_at}
