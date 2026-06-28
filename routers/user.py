@@ -15,7 +15,7 @@ from fastapi import status
 from fastapi.exceptions import HTTPException
 from utils.tokens import get_current_user
 
-router = APIRouter(prefix='user',tags=['User'])
+router = APIRouter(prefix='/user',tags=['User'])
 
 @router.get('/login')
 async def instagram_login():
