@@ -5,10 +5,9 @@ from routers.payments import router as payments_router
 from routers.user import router as authentication_router
 from routers.instagram.main_router import router as instagram_router
 from routers.rules import router as rules_router
-from routers.compliance import router as compliance_router
 from utils.background_tasks import scheduler, refresh_instagram_tokens, wipe_deleted_users
 
-router_list = [authentication_router,instagram_router,rules_router,compliance_router,payments_router]
+router_list = [authentication_router,instagram_router,rules_router,payments_router]
 
 tasklist = [refresh_instagram_tokens, wipe_deleted_users]
 
