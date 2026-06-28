@@ -10,7 +10,7 @@ from utils.encryption import decrypt
 from settings import VERIFY_TOKEN
 from utils.instagram_functions import send_dm,send_reply
 
-router = APIRouter(prefix='/webhook', tags=['Webhook'])
+router = APIRouter(prefix='/webhook')
 
 @router.get('')
 async def verify_webhook(
