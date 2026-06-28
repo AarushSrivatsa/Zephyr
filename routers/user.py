@@ -15,7 +15,7 @@ from fastapi import status
 from fastapi.exceptions import HTTPException
 from utils.tokens import get_current_user
 
-router = APIRouter(prefix='/authentication',tags=['Authentication'])
+router = APIRouter(prefix='user',tags=['User'])
 
 @router.get('/login')
 async def instagram_login():
@@ -42,6 +42,7 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
             'code': code
         }
     )
+    
     short_lived_data = short_lived_response.json()
     short_lived_token = short_lived_data['access_token']
 	
@@ -49,7 +50,7 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
     long_lived_response = await client.get(
         'https://graph.instagram.com/access_token',
         params={
-            'grant_type': 'ig_exchange_token',
+            'grant_type': 'ig_exchange/_token',
             'client_secret': CLIENT_SECRET,
             'access_token': short_lived_token
         }
@@ -158,3 +159,22 @@ async def logout(refresh_token: str, db: AsyncSession = Depends(get_db), user: U
     ))
     
     return {'message': 'Logged out successfully'}
+
+@router.delete('/me')
+async def delete_account(db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
+    
+    # Unsubscribe from Instagram webhooks
+    access_token = decrypt(user.encrypted_instagram_access_token)
+    await client.delete(
+        f'https://graph.instagram.com/v25.0/{user.user_id}/subscribed_apps',
+        params={'access_token': access_token}
+    )
+
+    # Revoke all sessions
+    await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.user_id == user.user_id))
+
+    # Mark as deleted
+    user.encrypted_instagram_access_token = None
+    user.deleted_at = datetime.now(timezone.utc)
+
+    return {'message': 'Account deleted successfully'}

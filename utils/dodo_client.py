@@ -6,4 +6,3 @@ dodo = AsyncDodoPayments(
     environment='test_mode',
     webhook_key=DODO_WEBHOOK_SECRET
 )
-

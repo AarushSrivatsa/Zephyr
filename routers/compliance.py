@@ -45,19 +45,10 @@ async def data_deletion(request: Request, db: AsyncSession = Depends(get_db)):
     if not user_id:
         raise HTTPException(status_code=400, detail='Missing user_id')
     
-
-    # Delete refresh tokens
+    # Revoke all sessions
     await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.user_id == user_id))
-    
-    # Delete DM logs
-    await db.execute(delete(DMLogsModel).where(DMLogsModel.rule_id.in_(
-        select(RuleModel.id).where(RuleModel.user_id == user_id)
-    )))
-    
-    # Delete rules
-    await db.execute(delete(RuleModel).where(RuleModel.user_id == user_id))
-    
-    # Null out Instagram token and mark deleted
+
+    # Mark as deleted
     await db.execute(
         update(UserModel)
         .where(UserModel.user_id == user_id)
@@ -66,9 +57,8 @@ async def data_deletion(request: Request, db: AsyncSession = Depends(get_db)):
             deleted_at=datetime.now(timezone.utc)
         )
     )
-    
+
     confirmation_code = f'zephyr_{user_id}_{int(datetime.now().timestamp())}'
-    
     return {
         'url': f'https://zephyr-m5w7.onrender.com/compliance/deletion-status?code={confirmation_code}',
         'confirmation_code': confirmation_code

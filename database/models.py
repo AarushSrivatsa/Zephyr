@@ -15,7 +15,7 @@ class UserModel(Base):
 	profile_pic_url : Mapped[str] = mapped_column(Text)
 	created_at : Mapped[datetime] = mapped_column(DateTime(timezone=True),server_default= func.now())
 	deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
-
+	
 	#instagram columns
 	encrypted_instagram_access_token : Mapped[str] = mapped_column(Text)
 	instagram_token_expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
