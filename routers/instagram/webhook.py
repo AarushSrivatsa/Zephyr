@@ -10,9 +10,9 @@ from utils.encryption import decrypt
 from settings import VERIFY_TOKEN
 from utils.instagram_functions import send_dm,send_reply
 
-router = APIRouter(prefix='/instagram', tags=['Instagram Webhook'])
+router = APIRouter(prefix='/webhook', tags=['Webhook'])
 
-@router.get('/webhook')
+@router.get('')
 async def verify_webhook(
     hub_mode: str = Query(alias='hub.mode'),
     hub_challenge: int = Query(alias='hub.challenge'),
@@ -22,7 +22,7 @@ async def verify_webhook(
         return PlainTextResponse(content=str(hub_challenge))
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Verification failed')
 
-@router.post('/webhook')
+@router.post('')
 async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     data = await request.json()
 
