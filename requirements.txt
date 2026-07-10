@@ -11,3 +11,4 @@ cryptography
 pyjwt
 dodopayments
 apscheduler
+slowapi

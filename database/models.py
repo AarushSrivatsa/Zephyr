@@ -24,6 +24,7 @@ class UserModel(Base):
 	subscription = Relationship('SubscriptionModel',back_populates='user',uselist=False)
 	rules = Relationship('RuleModel',back_populates='user')
 	refresh_tokens = Relationship('RefreshTokenModel',back_populates='user')
+	scheduled_posts = Relationship('ScheduledPostModel', back_populates='user')
 
 class SubscriptionModel(Base):
 	__tablename__ = 'subscriptions'
@@ -95,4 +96,44 @@ class RefreshTokenModel(Base):
     # Relationships
     user = Relationship('UserModel', back_populates='refresh_tokens')
 
-class 
+class PostType(enum.Enum):
+    image = "image"
+    reel = "reel"
+    carousel = "carousel"
+
+class PostStatus(enum.Enum):
+    pending = "pending"
+    published = "published"
+    failed = "failed"
+
+class ScheduledPostModel(Base):
+	__tablename__ = 'scheduled_posts'
+	id : Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+	caption : Mapped[Optional[str]] = mapped_column(Text,nullable=True)
+	post_type : Mapped[PostType] = mapped_column(Enum(PostType),nullable=False)
+	status : Mapped[PostStatus] = mapped_column(Enum(PostStatus), server_default='pending')
+	scheduled_at : Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=False)
+	created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+	error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Foreign Keys
+	user_id: Mapped[str] = mapped_column(String(50), ForeignKey('users.user_id', ondelete='CASCADE'), index=True)
+
+    # Relationships
+	user = Relationship('UserModel', back_populates='scheduled_posts')
+	media_items = Relationship('ScheduledPostMediaModel', back_populates='post')
+
+class ScheduledPostMediaModel(Base):
+    __tablename__ = 'scheduled_post_media'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    media_url: Mapped[str] = mapped_column(Text, nullable=False)
+    media_type: Mapped[str] = mapped_column(String(20), nullable=False)  # IMAGE, VIDEO, REELS
+    order: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Foreign Keys
+    post_id: Mapped[int] = mapped_column(Integer, ForeignKey('scheduled_posts.id', ondelete='CASCADE'), index=True)
+
+    # Relationships
+    post = Relationship('ScheduledPostModel', back_populates='media_items')
+
