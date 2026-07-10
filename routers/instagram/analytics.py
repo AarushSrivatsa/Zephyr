@@ -7,7 +7,7 @@ from utils.token_handling import get_current_user
 from utils.http_client import client
 from utils.encryption import decrypt
 
-router = APIRouter(prefix='/analytics', tags=['Analytics'])
+router = APIRouter(prefix='/analytics')
 
 @router.get('/account')
 async def get_account_insights(

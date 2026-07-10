@@ -94,3 +94,5 @@ class RefreshTokenModel(Base):
 
     # Relationships
     user = Relationship('UserModel', back_populates='refresh_tokens')
+
+class 
