@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.initialization import get_db
 from database.models import RuleModel, UserModel
-from utils.tokens import get_current_user
+from utils.token_handling import get_current_user
 from pydantic import BaseModel
 from utils.media_id_extraction import extract_media_id
 from datetime import datetime
@@ -70,7 +70,7 @@ class RuleUpdate(BaseModel):
     dm_message: str | None = None
     reply_message: str | None = None
     is_active: bool | None = None
-
+    
 @router.patch('/{rule_id}', response_model=RuleResponse)
 async def update_rule(rule_id: int, rule_update: RuleUpdate, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
     result = await db.execute(select(RuleModel).where(RuleModel.id == rule_id, RuleModel.user_id == user.user_id))
@@ -102,3 +102,4 @@ async def delete_rule(rule_id: int, db: AsyncSession = Depends(get_db), user: Us
 
     await db.delete(rule)
     return {'message': 'Rule deleted successfully'}
+

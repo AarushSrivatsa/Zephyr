@@ -8,12 +8,12 @@ from datetime import datetime, timezone, timedelta
 from database.models import UserModel, RefreshTokenModel, SubscriptionModel
 from utils.encryption import encrypt, decrypt
 from sqlalchemy import select
-from utils.tokens import create_refresh_token, create_access_token, decode_refresh_token
+from utils.token_handling import create_refresh_token, create_access_token, decode_refresh_token
 from settings import REFRESH_TOKEN_EXPIRE_DAYS
 from sqlalchemy import delete
 from fastapi import status
 from fastapi.exceptions import HTTPException
-from utils.tokens import get_current_user
+from utils.token_handling import get_current_user
 
 router = APIRouter(prefix='/user',tags=['User'])
 
