@@ -1,5 +1,5 @@
 import cloudflare
-from settings import CLOUDFLARE_API_TOKEN, R2_ACCOUNT_ID, R2_BUCKET_NAME
+from settings import CLOUDFLARE_API_TOKEN, R2_ACCOUNT_ID, R2_BUCKET_NAME, R2_PUBLIC_URL
 import uuid
 
 cf = cloudflare.AsyncCloudflare(api_token=CLOUDFLARE_API_TOKEN)
@@ -12,7 +12,7 @@ async def upload_file(file_bytes: bytes, key: str, content_type: str) -> str:
         body=file_bytes,
         extra_headers={'Content-Type': content_type}
     )
-    return f'https://{R2_BUCKET_NAME}.{R2_ACCOUNT_ID}.r2.cloudflarestorage.com/{key}'
+    return f'{R2_PUBLIC_URL}/{key}'
 
 async def delete_post_media(post):
     for item in post.media_items:
