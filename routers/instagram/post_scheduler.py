@@ -13,6 +13,15 @@ from utils.cloudflare_client import delete_post_media
 
 router = APIRouter(prefix='/posts', tags=['Scheduled Posts'])
 
+class ScheduledPostMediaResponse(BaseModel):
+    id : int
+    media_url : str
+    media_type : str
+    order : int
+
+    class Config:
+        from_attributes = True
+
 class ScheduledPostResponse(BaseModel):
     id: int
     caption: Optional[str]
@@ -21,6 +30,7 @@ class ScheduledPostResponse(BaseModel):
     scheduled_at: datetime
     created_at: datetime
     error_message: Optional[str]
+    media_items : list[ScheduledPostMediaResponse]
 
     class Config:
         from_attributes = True
