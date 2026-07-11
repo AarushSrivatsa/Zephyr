@@ -7,6 +7,9 @@ from utils.cloudflare_client import upload_file, generate_key
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from utils.cloudflare_client import delete_post_media
 
 router = APIRouter(prefix='/posts', tags=['Scheduled Posts'])
 
@@ -81,3 +84,82 @@ async def create_scheduled_post(
     await db.flush()
     await db.refresh(new_post)
     return new_post
+
+@router.get('', response_model=list[ScheduledPostResponse])
+async def list_scheduled_posts(
+    db: AsyncSession = Depends(get_db),
+    user: UserModel = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(ScheduledPostModel)
+        .options(selectinload(ScheduledPostModel.media_items))
+        .where(ScheduledPostModel.user_id == user.user_id)
+        .order_by(ScheduledPostModel.scheduled_at)
+    )
+    return result.scalars().all()
+
+
+@router.get('/{post_id}', response_model=ScheduledPostResponse)
+async def get_scheduled_post(
+    post_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: UserModel = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(ScheduledPostModel)
+        .options(selectinload(ScheduledPostModel.media_items))
+        .where(ScheduledPostModel.id == post_id, ScheduledPostModel.user_id == user.user_id)
+    )
+    post = result.scalar_one_or_none()
+    if not post:
+        raise HTTPException(status_code=404, detail='Post not found')
+    return post
+
+@router.patch('/{post_id}', response_model=ScheduledPostResponse)
+async def update_scheduled_post(
+    post_id: int,
+    caption: Optional[str] = Form(None),
+    scheduled_at: Optional[datetime] = Form(None),
+    db: AsyncSession = Depends(get_db),
+    user: UserModel = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(ScheduledPostModel)
+        .where(ScheduledPostModel.id == post_id, ScheduledPostModel.user_id == user.user_id)
+    )
+    post = result.scalar_one_or_none()
+    if not post:
+        raise HTTPException(status_code=404, detail='Post not found')
+
+    if post.status != PostStatus.pending:
+        raise HTTPException(status_code=400, detail='Cannot edit a published or failed post')
+
+    if caption is not None:
+        post.caption = caption
+    if scheduled_at is not None:
+        if scheduled_at < datetime.now(scheduled_at.tzinfo):
+            raise HTTPException(status_code=400, detail='Scheduled time must be in the future')
+        post.scheduled_at = scheduled_at
+
+    await db.flush()
+    await db.refresh(post)
+    return post
+
+@router.delete('/{post_id}')
+async def delete_scheduled_post(
+    post_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: UserModel = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(ScheduledPostModel)
+        .options(selectinload(ScheduledPostModel.media_items))
+        .where(ScheduledPostModel.id == post_id, ScheduledPostModel.user_id == user.user_id)
+    )
+    post = result.scalar_one_or_none()
+    if not post:
+        raise HTTPException(status_code=404, detail='Post not found')
+
+    await delete_post_media(post)
+    await db.delete(post)
+    return {'message': 'Post deleted successfully'}
