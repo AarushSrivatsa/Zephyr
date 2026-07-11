@@ -5,7 +5,10 @@ from database.models import UserModel
 from utils.http_client import client
 from utils.encryption import encrypt, decrypt
 from datetime import datetime, timezone, timedelta
-from database.models import DMLogsModel, RuleModel
+from database.models import DMLogsModel, RuleModel, ScheduledPostModel, PostType, PostStatus
+from sqlalchemy.orm import selectinload
+from instagram_functions import publish_image, publish_reel, publish_carousel
+from cloudflare_client import delete_post_media
 
 scheduler = AsyncIOScheduler()
 
@@ -14,7 +17,7 @@ async def refresh_instagram_tokens():
         # Find users whose token expires in less than 7 days
         result = await db.execute(
             select(UserModel).where(
-                UserModel.instagram_token_expires_at < datetime.now(timezone.utc) + timedelta(days=7)
+                UserModel.instagram_token_expires_at < datetime.now(timezone.utc) + timedelta(days=7), UserModel.deleted_at.is_(None)
             )
         )
         users = result.scalars().all()
@@ -60,3 +63,37 @@ async def wipe_deleted_users():
 
         await db.commit()
         print(f'Wiped {len(users)} deleted users')
+
+async def publish_scheduled_posts():
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(ScheduledPostModel)
+            .options(selectinload(ScheduledPostModel.media_items), selectinload(ScheduledPostModel.user))
+            .where(
+                ScheduledPostModel.scheduled_at <= datetime.now(timezone.utc),
+                ScheduledPostModel.status == PostStatus.pending
+            )
+        )
+        posts = result.scalars().all()
+
+        for post in posts:
+            try:
+                access_token = decrypt(post.user.encrypted_instagram_access_token)
+                
+                if post.post_type == PostType.image:
+                    await publish_image(post, access_token)
+                elif post.post_type == PostType.reel:
+                    await publish_reel(post, access_token)
+                elif post.post_type == PostType.carousel:
+                    await publish_carousel(post, access_token)
+
+                post.status = PostStatus.published
+                # Delete from R2
+                await delete_post_media(post=post)
+
+            except Exception as e:
+                post.status = PostStatus.failed
+                post.error_message = str(e)
+                print(f'Failed to publish post {post.id}: {e}')
+
+        await db.commit()
