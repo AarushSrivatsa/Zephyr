@@ -8,7 +8,7 @@ from datetime import datetime, timezone, timedelta
 from database.models import DMLogsModel, RuleModel, ScheduledPostModel, PostType, PostStatus
 from sqlalchemy.orm import selectinload
 from utils.instagram_functions import publish_image, publish_reel, publish_carousel
-from cloudflare_client import delete_post_media
+from utils.cloudflare_client import delete_post_media
 
 scheduler = AsyncIOScheduler()
 
