@@ -92,8 +92,13 @@ async def create_scheduled_post(
         ))
 
     await db.flush()
-    await db.refresh(new_post)
-    return new_post
+
+    result = await db.execute(
+    select(ScheduledPostModel)
+    .options(selectinload(ScheduledPostModel.media_items))
+    .where(ScheduledPostModel.id == new_post.id)
+)
+    return result.scalar_one()
 
 @router.get('', response_model=list[ScheduledPostResponse])
 async def list_scheduled_posts(
@@ -152,8 +157,16 @@ async def update_scheduled_post(
         post.scheduled_at = scheduled_at
 
     await db.flush()
-    await db.refresh(post)
-    return post
+
+    result = await db.execute(
+    select(ScheduledPostModel)
+    .options(selectinload(ScheduledPostModel.media_items))
+    .where(ScheduledPostModel.id == post.id,
+    ScheduledPostModel.user_id == user.user_id
+        )
+    )
+
+    return result.scalar_one()
 
 @router.delete('/{post_id}')
 async def delete_scheduled_post(
