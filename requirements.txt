@@ -13,3 +13,4 @@ dodopayments
 apscheduler
 slowapi
 cloudflare
+python-multipart
