@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.initialization import get_db
 from database.models import UserModel, ScheduledPostModel, ScheduledPostMediaModel, PostType, PostStatus
 from utils.token_handling import get_current_user
-from utils.cloudflare_client import upload_file, generate_key
+from utils.cloudflare_client import upload_file
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
@@ -63,8 +63,7 @@ async def create_scheduled_post(
     uploaded_media = []
     for i, file in enumerate(files):
         file_bytes = await file.read()
-        key = generate_key(user.user_id, file.filename)
-        url = await upload_file(file_bytes, key, file.content_type)
+        url, key = await upload_file(user.user_id,file.filename, file_bytes, file.content_type)
         uploaded_media.append({
             'url': url,
             'key': key,
