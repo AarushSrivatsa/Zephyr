@@ -6,6 +6,4 @@ from routers.instagram.post_scheduler import router as posts_router
 
 router = APIRouter(prefix='/instagram', tags=['Instagram'])
 
-router.include_router(analytics_router)
 router.include_router(webhook_router)
-router.include_router(posts_router)
