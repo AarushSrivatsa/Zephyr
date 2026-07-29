@@ -1,3 +1,4 @@
+# routers/instagram/router.py
 from fastapi import APIRouter, Query, HTTPException, status, Request, Depends
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,9 +11,9 @@ from utils.encryption import decrypt
 from settings import VERIFY_TOKEN
 from utils.instagram_functions import send_dm,send_reply
 
-router = APIRouter(prefix='/webhook')
+router = APIRouter(prefix='/instagram', tags=['Instagram'])
 
-@router.get('')
+@router.get('/webhook')
 async def verify_webhook(
     hub_mode: str = Query(alias='hub.mode'),
     hub_challenge: int = Query(alias='hub.challenge'),
@@ -22,7 +23,7 @@ async def verify_webhook(
         return PlainTextResponse(content=str(hub_challenge))
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Verification failed')
 
-@router.post('')
+@router.post('/webhook')
 async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     data = await request.json()
 
