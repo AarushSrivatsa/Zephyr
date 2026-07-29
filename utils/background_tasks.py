@@ -7,7 +7,6 @@ from utils.encryption import encrypt, decrypt
 from datetime import datetime, timezone, timedelta
 from database.models import DMLogsModel, RuleModel
 from sqlalchemy.orm import selectinload
-from utils.instagram_functions import publish_image, publish_reel, publish_carousel
 
 scheduler = AsyncIOScheduler()
 
