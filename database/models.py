@@ -24,7 +24,6 @@ class UserModel(Base):
 	subscription = Relationship('SubscriptionModel',back_populates='user',uselist=False)
 	rules = Relationship('RuleModel',back_populates='user')
 	refresh_tokens = Relationship('RefreshTokenModel',back_populates='user')
-	scheduled_posts = Relationship('ScheduledPostModel', back_populates='user')
 
 class SubscriptionModel(Base):
 	__tablename__ = 'subscriptions'
