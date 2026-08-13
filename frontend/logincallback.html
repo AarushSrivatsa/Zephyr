@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Connecting your account — Zephyr</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css" />
+<style>
+  body{ display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .panel{ width: 100%; max-width: 400px; padding: 40px 34px; text-align:center; }
+  .spin-wrap{ display:flex; justify-content:center; margin-bottom: 22px; }
+  .spinner-lg{ width: 34px; height: 34px; border-width: 3px; }
+  h1{ font-size: 20px; margin-bottom: 8px; }
+  .state-icon{ font-size: 30px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+  <div class="card panel" id="panel">
+    <div class="spin-wrap"><span class="spinner spinner-lg"></span></div>
+    <h1>Connecting your Instagram account</h1>
+    <p id="statusText">Hang tight, this only takes a second…</p>
+  </div>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/ui.js"></script>
+  <script src="assets/api.js"></script>
+  <script>
+    (async function () {
+      const panel = document.getElementById("panel");
+      const statusText = document.getElementById("statusText");
+
+      function showError(message) {
+        panel.innerHTML = `
+          <div class="state-icon">⚠️</div>
+          <h1>Connection failed</h1>
+          <p>${window.ZephyrUI.escapeHtml(message)}</p>
+          <a class="btn btn-accent btn-block" href="index.html" style="margin-top:14px;">Back to Zephyr</a>
+        `;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      const errorParam = params.get("error_description") || params.get("error");
+
+      if (errorParam) {
+        showError(errorParam);
+        return;
+      }
+      if (!code) {
+        showError("No authorization code was returned by Instagram. Please try connecting again.");
+        return;
+      }
+
+      try {
+        const data = await window.ZephyrAPI.exchangeCode(code);
+        window.ZephyrAPI.tokens.set(data);
+        statusText.textContent = "Connected. Taking you to your dashboard…";
+        window.location.replace("dashboard.html");
+      } catch (e) {
+        showError(e.detail || e.message || "Something went wrong while connecting your account.");
+      }
+    })();
+  </script>
+</body>
+</html>

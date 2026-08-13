@@ -1,0 +1,108 @@
+# Zephyr — frontend
+
+A plain HTML/CSS/JS frontend for the Zephyr comment-to-DM backend. No build step —
+open the files in a browser or serve the folder with any static file server.
+
+```
+index.html            Landing page + "Connect Instagram" entry point
+login-callback.html   Handles the Instagram OAuth redirect, exchanges the code for tokens
+dashboard.html         Rules / Billing / Account
+assets/config.js       API_BASE_URL + OAuth callback URL — edit this first
+assets/api.js          Fetch wrapper: token storage, auto-refresh on 401, all endpoint calls
+assets/ui.js           Toasts + small helpers
+assets/style.css       Design tokens + shared styles
+assets/landing.js, dashboard.js   Page-specific behaviour
+```
+
+## 1. Point it at your backend
+
+Edit `assets/config.js`:
+
+```js
+window.ZEPHYR_CONFIG = {
+  API_BASE_URL: "https://your-backend.example.com",
+  OAUTH_CALLBACK_URL: window.location.origin + "/login-callback.html",
+};
+```
+
+## 2. Backend changes this frontend needs
+
+The API currently has no `Access-Control-Allow-Origin` headers, so browser
+`fetch()` calls from a separately-hosted frontend will be blocked. Add CORS to
+`main.py`:
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://your-frontend.example.com"],  # no trailing slash
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+Also update two values so the OAuth and checkout redirects land back on the
+frontend instead of the API:
+
+- **`REDIRECT_URI` env var** (used in `routers/user.py`) → set it to
+  `https://your-frontend.example.com/login-callback.html`, and register the
+  same URL in your Instagram app's OAuth settings.
+- **`routers/payments.py`**, `return_url` in `create_checkout` → currently
+  hardcoded to `https://zephyr-m5w7.onrender.com/dashboard`. Point it at your
+  frontend's dashboard page instead, e.g.
+  `https://your-frontend.example.com/dashboard.html`.
+
+### Optional but recommended: a `GET /user/me` endpoint
+
+Right now the API never returns the signed-in user's `username`,
+`profile_pic_url`, or subscription/trial dates — `instagram_callback` only
+returns tokens. The dashboard currently falls back to the `user_id` decoded
+from the JWT, and infers subscription status by watching for `403` responses
+from `/rules`. Adding something like:
+
+```python
+@router.get('/me')
+async def get_me(user: UserModel = Depends(get_current_user)):
+    return {
+        'username': user.username,
+        'profile_pic_url': user.profile_pic_url,
+        'next_billing_date': user.subscription.next_billing_date,
+    }
+```
+
+would let the dashboard show the actual username/avatar and a real "renews on
+…" / "trial ends …" date instead of the generic status text.
+
+## 3. Run it locally
+
+Any static server works, e.g.:
+
+```
+npx serve .
+# or
+python3 -m http.server 5500
+```
+
+Then open `http://localhost:5500`.
+
+## How auth works here
+
+1. "Connect Instagram" sends the browser to `GET {API_BASE_URL}/user/login`,
+   which redirects to Instagram's OAuth screen.
+2. Instagram redirects back to `OAUTH_CALLBACK_URL` (must equal the backend's
+   `REDIRECT_URI`) with `?code=...`.
+3. `login-callback.html` calls `GET /user/instagram_callback?code=...`,
+   stores the returned `access_token`/`refresh_token` in `localStorage`, and
+   sends the user to `dashboard.html`.
+4. Every API call attaches `Authorization: Bearer <access_token>`. On a 401,
+   `assets/api.js` silently calls `POST /user/refresh` and retries once
+   before giving up and sending the user back to sign in.
+
+## Notes on `/rules` and subscriptions
+
+`GET /rules` (and every other rules endpoint) returns `403` for users without
+an active subscription — including a lapsed 7-day trial. The dashboard treats
+any `403` from that endpoint as "needs billing" and shows a banner with a
+link into `/payments/checkout`, rather than calling a separate status
+endpoint (since the API doesn't currently expose one — see above).
