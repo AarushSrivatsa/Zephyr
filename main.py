@@ -1,4 +1,7 @@
+import os
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 from utils.http_client import client
 from routers.payments import router as payments_router
@@ -31,4 +34,23 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 for router in router_list:
     app.include_router(router)
 
+# ---------------------------------------------------------------
+# Frontend (built by the Docker image into /app/frontend)
+# ---------------------------------------------------------------
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
 
+app.mount("/css", StaticFiles(directory=os.path.join(FRONTEND_DIR, "css")), name="css")
+app.mount("/js", StaticFiles(directory=os.path.join(FRONTEND_DIR, "js")), name="js")
+
+@app.get("/", include_in_schema=False)
+async def serve_index():
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+
+@app.get("/dashboard", include_in_schema=False)
+@app.get("/dashboard.html", include_in_schema=False)
+async def serve_dashboard():
+    return FileResponse(os.path.join(FRONTEND_DIR, "dashboard.html"))
+
+@app.get("/login-callback.html", include_in_schema=False)
+async def serve_login_callback():
+    return FileResponse(os.path.join(FRONTEND_DIR, "login-callback.html"))
