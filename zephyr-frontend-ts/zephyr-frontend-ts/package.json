@@ -1,0 +1,15 @@
+{
+  "name": "zephyr-frontend-ts",
+  "version": "1.0.0",
+  "description": "Zephyr frontend — HTML/CSS + TypeScript, compiled to native ES modules, no bundler.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "serve": "npx --yes http-server -p 5500 -c-1"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}
