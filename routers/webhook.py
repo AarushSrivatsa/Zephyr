@@ -1,4 +1,3 @@
-# routers/instagram/router.py
 from fastapi import APIRouter, Query, HTTPException, status, Request, Depends
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +8,7 @@ from database.models import RuleModel, DMLogsModel
 from utils.http_client import client
 from utils.encryption import decrypt
 from settings import VERIFY_TOKEN
-from utils.instagram_functions import send_dm,send_reply
+from utils.instagram_functions import send_dm, send_reply
 import random
 
 router = APIRouter(prefix='/instagram', tags=['Instagram'])
@@ -72,7 +71,8 @@ async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         )
     )
     rules = rules_result.scalars().all()
-    rule_map = {(rule.media_id, rule.catchphrase): rule for rule in rules}
+    # lowercase catchphrase key to match the lowercased comment_text
+    rule_map = {(rule.media_id, rule.catchphrase.lower()): rule for rule in rules}
 
     # Step 4: Process each comment
     for comment_text, media_id, comment_id, commenter_id in comments:
@@ -81,9 +81,14 @@ async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             print(f'No rule found for: {comment_text}')
             continue
 
-        message = random.choice(rule.dm_message)
+        # skip rules belonging to soft-deleted users
+        if not rule.user.encrypted_instagram_access_token:
+            print(f'Skipping comment {comment_id}: user {rule.user.user_id} has no token')
+            continue
 
+        message = random.choice(rule.dm_message)
         access_token = decrypt(rule.user.encrypted_instagram_access_token)
+
         sent = await send_dm(rule.user.user_id, comment_id, message, access_token)
 
         if sent:
@@ -98,10 +103,7 @@ async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             ))
             rule.count += 1
         else:
-            raise HTTPException(
-                status_code=500,
-                detail=f'Failed to send DM for comment {comment_id}'
-            )
-
+            # log and move on — don't 500 the whole webhook (Instagram would retry forever)
+            print(f'Failed to send DM for comment {comment_id}, skipping')
 
     return {'status': 'ok'}

@@ -6,8 +6,7 @@ from database.initialization import get_db
 from database.models import SubscriptionModel, UserModel
 from utils.dodo_client import dodo
 from utils.token_handling import get_current_user
-from settings import DODO_PRODUCT_ID, DODO_WEBHOOK_SECRET
-from datetime import datetime, timezone
+from settings import DODO_PRODUCT_ID
 
 router = APIRouter(prefix='/payments', tags=['Payments'])
 
@@ -36,7 +35,7 @@ async def dodo_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         )
     except Exception:
         raise HTTPException(status_code=401, detail='Invalid signature')
-    
+
     event_type = event.type
     data = event.data
     user_id = data.metadata.get('user_id')
@@ -50,5 +49,5 @@ async def dodo_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             .where(SubscriptionModel.user_id == user_id)
             .values(next_billing_date=data.next_billing_date)
         )
-	
+
     return {'status': 'ok'}

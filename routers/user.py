@@ -15,7 +15,7 @@ from fastapi import status
 from fastapi.exceptions import HTTPException
 from utils.token_handling import get_current_user
 
-router = APIRouter(prefix='/user',tags=['User'])
+router = APIRouter(prefix='/user', tags=['User'])
 
 @router.get('/login')
 async def instagram_login():
@@ -24,13 +24,12 @@ async def instagram_login():
         f"?client_id={CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
         f"&response_type=code"
-        f"&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights"
+        f"&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments"
     )
-    
     return RedirectResponse(auth_url)
 
 @router.get('/instagram_callback')
-async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
+async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
     # Step 1: Exchange code for short-lived token
     short_lived_response = await client.post(
         'https://api.instagram.com/oauth/access_token',
@@ -42,11 +41,10 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
             'code': code
         }
     )
-    
     short_lived_data = short_lived_response.json()
     short_lived_token = short_lived_data['access_token']
-	
-	# Step 2: Exchange for long-lived token
+
+    # Step 2: Exchange for long-lived token
     long_lived_response = await client.get(
         'https://graph.instagram.com/access_token',
         params={
@@ -55,12 +53,11 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
             'access_token': short_lived_token
         }
     )
-
     long_lived_data = long_lived_response.json()
     long_lived_token = long_lived_data['access_token']
     expires_in_seconds = long_lived_data['expires_in']
-    
-	# Step 3: Fetch user info
+
+    # Step 3: Fetch user info
     user_response = await client.get(
         'https://graph.instagram.com/v25.0/me',
         params={
@@ -69,7 +66,7 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
         }
     )
     user_data = user_response.json()
-    
+
     # Step 4: Encrypt token
     encrypted_token = encrypt(long_lived_token)
     token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in_seconds)
@@ -77,13 +74,13 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
     # Step 5: Upsert user
     result = await db.execute(select(UserModel).where(UserModel.user_id == user_data['user_id']))
     existing_user = result.scalar_one_or_none()
-    
+
     if existing_user:
         existing_user.encrypted_instagram_access_token = encrypted_token
         existing_user.instagram_token_expires_at = token_expires_at
         existing_user.username = user_data['username']
         existing_user.profile_pic_url = user_data['profile_picture_url']
-        existing_user.deleted_at = None
+        existing_user.deleted_at = None  # restore soft-deleted accounts
     else:
         db.add(UserModel(
             user_id=user_data['user_id'],
@@ -92,27 +89,27 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
             encrypted_instagram_access_token=encrypted_token,
             instagram_token_expires_at=token_expires_at
         ))
-        # Step 6: Create user and subscription if first time user
+        # Only create subscription for brand-new users
         db.add(SubscriptionModel(
             user_id=user_data['user_id'],
             next_billing_date=datetime.now(timezone.utc) + timedelta(days=7)
         ))
-    
+
     new_refresh_token = create_refresh_token(user_data['user_id'])
-    
     db.add(RefreshTokenModel(
         token=new_refresh_token,
         user_id=user_data['user_id'],
         expires_at=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     ))
-    
+
+    # Step 6: Subscribe to Instagram webhook events
     await client.post(
-    f'https://graph.instagram.com/v25.0/{user_data["user_id"]}/subscribed_apps',
-    params={
-        'subscribed_fields': 'comments,messages',
-        'access_token': long_lived_token
-    }
-)
+        f'https://graph.instagram.com/v25.0/{user_data["user_id"]}/subscribed_apps',
+        params={
+            'subscribed_fields': 'comments,messages',
+            'access_token': long_lived_token
+        }
+    )
 
     return {
         'access_token': create_access_token(user_data['user_id']),
@@ -122,22 +119,20 @@ async def instagram_callback(code: str, db : AsyncSession = Depends(get_db)):
 
 @router.post('/refresh')
 async def refresh(refresh_token: str, db: AsyncSession = Depends(get_db)):
-    
     payload = decode_refresh_token(refresh_token)
 
     result = await db.execute(select(RefreshTokenModel).where(RefreshTokenModel.token == refresh_token))
     db_token = result.scalar_one_or_none()
-    
-	# db token not found but someones trying to use it, log user out completely for safety
+
+    # token not in DB but someone's using it — log out everywhere for safety
     if not db_token:
         await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.user_id == payload['user_id']))
         await db.commit()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Refresh token reuse detected')
-    
-	# deleting old refresh token
+
+    # rotate: delete old, issue new
     await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.token == refresh_token))
-    
-	# creating new refresh token
+
     new_refresh_token = create_refresh_token(payload['user_id'])
     db.add(RefreshTokenModel(
         token=new_refresh_token,
@@ -153,17 +148,14 @@ async def refresh(refresh_token: str, db: AsyncSession = Depends(get_db)):
 
 @router.post('/logout')
 async def logout(refresh_token: str, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
-    
     await db.execute(delete(RefreshTokenModel).where(
         RefreshTokenModel.token == refresh_token,
         RefreshTokenModel.user_id == user.user_id
     ))
-    
     return {'message': 'Logged out successfully'}
 
 @router.delete('/me')
 async def delete_account(db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
-    
     # Unsubscribe from Instagram webhooks
     access_token = decrypt(user.encrypted_instagram_access_token)
     await client.delete(
@@ -174,7 +166,7 @@ async def delete_account(db: AsyncSession = Depends(get_db), user: UserModel = D
     # Revoke all sessions
     await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.user_id == user.user_id))
 
-    # Mark as deleted
+    # Soft-delete: clear token, mark deleted — background job purges after 15 days
     user.encrypted_instagram_access_token = None
     user.deleted_at = datetime.now(timezone.utc)
 

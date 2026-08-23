@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.initialization import get_db
 from database.models import RuleModel, UserModel
 from utils.token_handling import get_current_user
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from utils.media_id_extraction import extract_media_id
 from datetime import datetime
 from sqlalchemy import select
@@ -15,6 +15,19 @@ class RuleCreate(BaseModel):
     catchphrase: str
     dm_message: list[str]
     reply_message: str | None = None
+
+    @field_validator('catchphrase')
+    @classmethod
+    def normalize_catchphrase(cls, v: str) -> str:
+        return v.strip().lower()
+
+    @field_validator('dm_message', mode='before')
+    @classmethod
+    def coerce_dm_message(cls, v):
+        # accept a bare string from the frontend — wrap it in a list
+        if isinstance(v, str):
+            return [v]
+        return v
 
 class RuleResponse(BaseModel):
     id: int
@@ -29,34 +42,37 @@ class RuleResponse(BaseModel):
     class Config:
         from_attributes = True
 
-@router.post('',response_model=RuleResponse)
+@router.post('', response_model=RuleResponse)
 async def create_rule(rule: RuleCreate, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
-    
     media_info = await extract_media_id(url=rule.link, user=user)
-    
+
     new_rule = RuleModel(
         link=media_info['permalink'],
         media_id=media_info['media_id'],
         catchphrase=rule.catchphrase,
         dm_message=rule.dm_message,
         reply_message=rule.reply_message,
-        user_id=user.user_id)
-    
+        user_id=user.user_id
+    )
+
     db.add(new_rule)
-    
     await db.flush()
     await db.refresh(new_rule)
-    
+
     return new_rule
 
-@router.get('',response_model=list[RuleResponse])
-async def list_rules(page : int = 1, limit : int = 10, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
+@router.get('', response_model=list[RuleResponse])
+async def list_rules(page: int = 1, limit: int = 10, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
     offset = (page - 1) * limit
-    result = await db.execute(select(RuleModel).where(RuleModel.user_id == user.user_id).offset(offset).limit(limit))
-    rules = result.scalars().all()
-    return rules
+    result = await db.execute(
+        select(RuleModel)
+        .where(RuleModel.user_id == user.user_id)
+        .offset(offset)
+        .limit(limit)
+    )
+    return result.scalars().all()
 
-@router.get('/{rule_id}',response_model=RuleResponse)
+@router.get('/{rule_id}', response_model=RuleResponse)
 async def get_rule(rule_id: int, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
     result = await db.execute(select(RuleModel).where(RuleModel.id == rule_id, RuleModel.user_id == user.user_id))
     rule = result.scalar_one_or_none()
@@ -70,7 +86,23 @@ class RuleUpdate(BaseModel):
     dm_message: list[str] | None = None
     reply_message: str | None = None
     is_active: bool | None = None
-    
+
+    @field_validator('catchphrase')
+    @classmethod
+    def normalize_catchphrase(cls, v: str | None) -> str | None:
+        if v is not None:
+            return v.strip().lower()
+        return v
+
+    @field_validator('dm_message', mode='before')
+    @classmethod
+    def coerce_dm_message(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            return [v]
+        return v
+
 @router.patch('/{rule_id}', response_model=RuleResponse)
 async def update_rule(rule_id: int, rule_update: RuleUpdate, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
     result = await db.execute(select(RuleModel).where(RuleModel.id == rule_id, RuleModel.user_id == user.user_id))
@@ -87,7 +119,7 @@ async def update_rule(rule_id: int, rule_update: RuleUpdate, db: AsyncSession = 
 
     for field, value in update_data.items():
         setattr(rule, field, value)
-    
+
     await db.flush()
     await db.refresh(rule)
 
@@ -102,4 +134,3 @@ async def delete_rule(rule_id: int, db: AsyncSession = Depends(get_db), user: Us
 
     await db.delete(rule)
     return {'message': 'Rule deleted successfully'}
-
