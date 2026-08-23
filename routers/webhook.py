@@ -10,6 +10,7 @@ from utils.http_client import client
 from utils.encryption import decrypt
 from settings import VERIFY_TOKEN
 from utils.instagram_functions import send_dm,send_reply
+import random
 
 router = APIRouter(prefix='/instagram', tags=['Instagram'])
 
@@ -80,18 +81,27 @@ async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             print(f'No rule found for: {comment_text}')
             continue
 
+        message = random.choice(rule.dm_message)
+
         access_token = decrypt(rule.user.encrypted_instagram_access_token)
-        await send_dm(rule.user.user_id, comment_id, rule.dm_message, access_token)
+        sent = await send_dm(rule.user.user_id, comment_id, message, access_token)
 
-        if rule.reply_message:
-            await send_reply(comment_id, rule.reply_message, access_token)
+        if sent:
+            if rule.reply_message:
+                await send_reply(comment_id, rule.reply_message, access_token)
 
-        db.add(DMLogsModel(
-            commenter_ig_id=commenter_id,
-            media_id=media_id,
-            comment_id=comment_id,
-            rule_id=rule.id
-        ))
-        rule.count += 1
+            db.add(DMLogsModel(
+                commenter_ig_id=commenter_id,
+                media_id=media_id,
+                comment_id=comment_id,
+                rule_id=rule.id
+            ))
+            rule.count += 1
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=f'Failed to send DM for comment {comment_id}'
+            )
+
 
     return {'status': 'ok'}

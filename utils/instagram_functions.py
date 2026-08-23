@@ -11,8 +11,11 @@ async def send_dm(ig_user_id: str, comment_id: str, message: str, access_token: 
     )
     if response.status_code != 200:
         print(f'DM failed: {response.text}')
+        return True
     else:
         print(f'DM sent for comment {comment_id}')
+        return False
+    
 
 
 async def send_reply(comment_id: str, message: str, access_token: str):

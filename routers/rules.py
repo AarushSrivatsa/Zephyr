@@ -13,14 +13,14 @@ router = APIRouter(prefix='/rules', tags=['Rules'])
 class RuleCreate(BaseModel):
     link: str
     catchphrase: str
-    dm_message: str
+    dm_message: list[str]
     reply_message: str | None = None
 
 class RuleResponse(BaseModel):
     id: int
     link: str
     catchphrase: str
-    dm_message: str
+    dm_message: list[str]
     reply_message: str | None
     is_active: bool
     count: int
@@ -67,7 +67,7 @@ async def get_rule(rule_id: int, db: AsyncSession = Depends(get_db), user: UserM
 class RuleUpdate(BaseModel):
     link: str | None = None
     catchphrase: str | None = None
-    dm_message: str | None = None
+    dm_message: list[str] | None = None
     reply_message: str | None = None
     is_active: bool | None = None
     

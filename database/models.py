@@ -3,6 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column, Relationship
 from sqlalchemy import String, DateTime, func, Text, ForeignKey, UniqueConstraint, Integer, Boolean
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import Enum
+from sqlalchemy.dialects.postgresql import ARRAY
 from typing import Optional
 import enum
 
@@ -48,7 +49,7 @@ class RuleModel(Base):
 	link : Mapped[str] = mapped_column(String(100),nullable=False)
 	media_id: Mapped[str] = mapped_column(String(100),nullable=False,index=True)
 	catchphrase: Mapped[str] = mapped_column(String(100),nullable=False,index=True)
-	dm_message: Mapped[str] = mapped_column(Text,nullable=False)
+	dm_message: Mapped[list[str]] = mapped_column(ARRAY(Text),nullable=False)
 	reply_message: Mapped[Optional[str]] = mapped_column(Text,nullable=True,default=None)
 
 	is_active: Mapped[bool] = mapped_column(Boolean,default=True)
