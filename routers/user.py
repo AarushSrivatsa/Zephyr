@@ -41,7 +41,18 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
             'code': code
         }
     )
+
     short_lived_data = short_lived_response.json()
+
+    print("STATUS:", short_lived_response.status_code)
+    print("META RESPONSE:", short_lived_data)
+
+    if 'access_token' not in short_lived_data:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Instagram token exchange failed: {short_lived_data}"
+        )
+
     short_lived_token = short_lived_data['access_token']
 
     # Step 2: Exchange for long-lived token
