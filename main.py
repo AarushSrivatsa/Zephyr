@@ -54,3 +54,8 @@ async def serve_dashboard():
 @app.get("/login-callback.html", include_in_schema=False)
 async def serve_login_callback():
     return FileResponse(os.path.join(FRONTEND_DIR, "login-callback.html"))
+
+@app.get("/callback", include_in_schema=False)
+@app.get("/login-callback.html", include_in_schema=False)
+async def serve_login_callback():
+    return FileResponse(os.path.join(FRONTEND_DIR, "login-callback.html"))
