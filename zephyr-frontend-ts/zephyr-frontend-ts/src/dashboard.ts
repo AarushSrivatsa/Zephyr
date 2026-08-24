@@ -378,17 +378,20 @@ function boot(): void {
   }
   requireEl("billingCheckoutBtn").addEventListener("click", () => void openCheckout());
 
-  async function refreshBillingStatus(): Promise<void> {
-    const el = requireEl("billingStatus");
-    el.textContent = "Checking…";
-    try {
-      const active = await api.hasActiveSubscription();
-      el.textContent = active ? "Active" : "Inactive — subscribe to continue";
-      el.style.color = active ? "var(--teal-deep)" : "var(--accent-deep)";
-    } catch {
-      el.textContent = "Unknown";
-    }
+async function refreshBillingStatus(): Promise<void> {
+  const el = requireEl("billingStatus");
+  const btn = requireEl("billingCheckoutBtn");
+  el.textContent = "Checking…";
+  try {
+    const active = await api.hasActiveSubscription();
+    el.textContent = active ? "Active" : "Inactive — subscribe to continue";
+    el.style.color = active ? "var(--teal-deep)" : "var(--accent-deep)";
+    btn.style.display = active ? "none" : "block";
+  } catch {
+    el.textContent = "Unknown";
+    btn.style.display = "block";
   }
+}
 
   void loadRules(1);
 }
