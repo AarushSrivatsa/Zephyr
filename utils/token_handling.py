@@ -62,7 +62,10 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(b
     
     subscription = user.subscription
     
-    if not subscription or subscription.next_billing_date < datetime.now(timezone.utc):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='No active subscription')
+    billing_date = subscription.next_billing_date
+    if billing_date.tzinfo is None:
+        billing_date = billing_date.replace(tzinfo=timezone.utc)
+    if billing_date < datetime.now(timezone.utc):
+        raise HTTPException(status_code=403, detail='No active subscription')
 
     return user

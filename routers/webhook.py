@@ -10,6 +10,9 @@ from utils.encryption import decrypt
 from settings import VERIFY_TOKEN
 from utils.instagram_functions import send_dm, send_reply
 import random
+import hmac, hashlib
+from settings import CLIENT_SECRET
+import json
 
 router = APIRouter(prefix='/instagram', tags=['Instagram'])
 
@@ -25,7 +28,14 @@ async def verify_webhook(
 
 @router.post('/webhook')
 async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
-    data = await request.json()
+    body = await request.body()
+    
+    sig_header = request.headers.get('X-Hub-Signature-256', '')
+    expected = 'sha256=' + hmac.new(CLIENT_SECRET.encode(), body, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig_header, expected):
+        raise HTTPException(status_code=403, detail='Invalid signature')
+    
+    data = json.loads(body)
 
     if data.get('object') != 'instagram':
         return {'status': 'ignored'}

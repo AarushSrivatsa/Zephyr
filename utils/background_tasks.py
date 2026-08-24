@@ -28,7 +28,8 @@ async def refresh_instagram_tokens():
                     params={
                         'grant_type': 'ig_refresh_token',
                         'access_token': access_token
-                    }
+                    },
+                    timeout=10.0
                 )
                 data = response.json()
                 new_token = data['access_token']

@@ -44,10 +44,13 @@ async def dodo_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         return {'status': 'ignored'}
 
     if event_type in ('subscription.active', 'subscription.renewed'):
+        next_billing_date = getattr(data, 'next_billing_date', None)
+        if not next_billing_date:
+            return {'status': 'ignored'}
         await db.execute(
             update(SubscriptionModel)
             .where(SubscriptionModel.user_id == user_id)
-            .values(next_billing_date=data.next_billing_date)
+            .values(next_billing_date=next_billing_date)
         )
 
     return {'status': 'ok'}

@@ -546,50 +546,48 @@
 
         </main>
     </div>
-
-    <!-- Rule create/edit modal -->
-    <div class="modal-overlay" id="ruleModalOverlay">
-        <div class="modal">
-            <div class="modal-head">
-                <h2 id="ruleModalTitle">New rule</h2>
-                <button class="modal-close" id="ruleModalClose" aria-label="Close">&times;</button>
-            </div>
-            <form id="ruleForm">
-                <div class="field">
-                    <label for="ruleLink">Instagram post link</label>
-                    <input type="url" id="ruleLink" placeholder="https://instagram.com/p/…" required />
-                    <div class="field-hint">A post, reel, or carousel from your connected account.</div>
-                </div>
-                <div class="field">
-                    <label for="ruleCatchphrase">Catchphrase</label>
-                    <input type="text" id="ruleCatchphrase" placeholder="GUIDE" required />
-                    <div class="field-hint">Comments matching this text (case-insensitive) trigger the DM.</div>
-                </div>
-                <div class="field">
-                    <label for="ruleDm">DM message(s)</label>
-                    <textarea id="ruleDm" placeholder="Here's the link you asked for…" required></textarea>
-                    <div class="field-hint">One message per line. Zephyr picks one at random when triggered.</div>
-                </div>
-                <div class="field">
-                    <label for="ruleReply">Public reply <span
-                            style="text-transform:none; font-weight:400;">(optional)</span></label>
-                    <textarea id="ruleReply" placeholder="Sent! Check your DMs 📩"></textarea>
-                </div>
-                <div class="field" id="ruleActiveField" style="display:none;">
-                    <label style="margin-bottom:0;">Status</label>
-                    <div class="rule-toggle" style="margin-top:8px;">
-                        <span class="switch"><input type="checkbox" id="ruleActive" checked /><span
-                                class="track"></span></span>
-                        <span id="ruleActiveLabel">Active</span>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-ghost" id="ruleCancelBtn">Cancel</button>
-                    <button type="submit" class="btn btn-accent" id="ruleSubmitBtn">Save rule</button>
-                </div>
-            </form>
-        </div>
+<!-- Rule create/edit modal -->
+<div class="modal-overlay" id="ruleModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="ruleModalTitle">New rule</h2>
+      <button class="modal-close" id="ruleModalClose" aria-label="Close">&times;</button>
     </div>
+    <form id="ruleForm">
+      <div class="field">
+        <label for="ruleLink">Instagram post link</label>
+        <input type="url" id="ruleLink" placeholder="https://instagram.com/p/…" required />
+        <div class="field-hint">A post, reel, or carousel from your connected account.</div>
+      </div>
+      <div class="field">
+        <label for="ruleCatchphrase">Catchphrase</label>
+        <input type="text" id="ruleCatchphrase" placeholder="GUIDE" required />
+        <div class="field-hint">Comments matching this text (case-insensitive) trigger the DM.</div>
+      </div>
+      <div class="field">
+        <label>DM message(s)</label>
+        <div id="dmVariants" style="display:flex; flex-direction:column; gap:8px;"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="addVariantBtn" style="margin-top:6px;">+ Add variant</button>
+        <div class="field-hint">Zephyr picks one at random. Add multiple for variety.</div>
+      </div>
+      <div class="field">
+        <label for="ruleReply">Public reply <span style="text-transform:none; font-weight:400;">(optional)</span></label>
+        <textarea id="ruleReply" placeholder="Sent! Check your DMs 📩"></textarea>
+      </div>
+      <div class="field" id="ruleActiveField" style="display:none;">
+        <label style="margin-bottom:0;">Status</label>
+        <div class="rule-toggle" style="margin-top:8px;">
+          <span class="switch"><input type="checkbox" id="ruleActive" checked /><span class="track"></span></span>
+          <span id="ruleActiveLabel">Active</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="ruleCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-accent" id="ruleSubmitBtn">Save rule</button>
+      </div>
+    </form>
+  </div>
+</div>
 
     <!-- Delete confirmation modal -->
     <div class="modal-overlay" id="confirmModalOverlay">

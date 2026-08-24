@@ -1,10 +1,9 @@
-// Zephyr — dashboard page (dashboard.html)
+// Zephyr — dashboard page
 import * as api from "./api.js";
 import { ApiError } from "./api.js";
 import type { RuleDto } from "./types.js";
 import { toast, escapeHtml, formatDate, requireEl } from "./ui.js";
 
-// ---------- auth gate ----------
 if (!api.tokens.isLoggedIn()) {
   requireEl("authGate").style.display = "block";
 } else {
@@ -37,7 +36,7 @@ function boot(): void {
   requireEl("logoutBtn").addEventListener("click", () => void doLogout());
   requireEl("accountLogoutBtn").addEventListener("click", () => void doLogout());
 
-  // ---------- generic confirm modal ----------
+  // ---------- confirm modal ----------
   const confirmOverlay = requireEl("confirmModalOverlay");
   let confirmResolver: ((result: boolean) => void) | null = null;
 
@@ -45,9 +44,7 @@ function boot(): void {
     requireEl("confirmTitle").textContent = title;
     requireEl("confirmBody").textContent = body;
     confirmOverlay.classList.add("is-open");
-    return new Promise((resolve) => {
-      confirmResolver = resolve;
-    });
+    return new Promise((resolve) => { confirmResolver = resolve; });
   }
   function closeConfirm(result: boolean): void {
     confirmOverlay.classList.remove("is-open");
@@ -57,9 +54,7 @@ function boot(): void {
   requireEl("confirmOkBtn").addEventListener("click", () => closeConfirm(true));
   requireEl("confirmCancelBtn").addEventListener("click", () => closeConfirm(false));
   requireEl("confirmClose").addEventListener("click", () => closeConfirm(false));
-  confirmOverlay.addEventListener("click", (e) => {
-    if (e.target === confirmOverlay) closeConfirm(false);
-  });
+  confirmOverlay.addEventListener("click", (e) => { if (e.target === confirmOverlay) closeConfirm(false); });
 
   // ---------- account deletion ----------
   requireEl("deleteAccountBtn").addEventListener("click", () => {
@@ -81,6 +76,51 @@ function boot(): void {
   });
 
   // =========================================================
+  // DM VARIANTS
+  // =========================================================
+  function renderVariants(messages: string[]): void {
+    const container = requireEl("dmVariants");
+    container.innerHTML = "";
+    const toRender = messages.length ? messages : [""];
+    toRender.forEach((msg) => addVariantRow(msg));
+  }
+
+  function addVariantRow(value = ""): void {
+    const container = requireEl("dmVariants");
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex; gap:8px; align-items:flex-start;";
+
+    const ta = document.createElement("textarea");
+    ta.className = "dm-variant-input";
+    ta.placeholder = "DM message…";
+    ta.required = true;
+    ta.value = value;
+    ta.style.cssText = "flex:1; min-height:72px;";
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn btn-ghost btn-sm";
+    removeBtn.textContent = "✕";
+    removeBtn.style.cssText = "margin-top:4px; flex:none;";
+    removeBtn.addEventListener("click", () => {
+      if (container.querySelectorAll(".dm-variant-input").length <= 1) return;
+      row.remove();
+    });
+
+    row.appendChild(ta);
+    row.appendChild(removeBtn);
+    container.appendChild(row);
+  }
+
+  function getVariants(): string[] {
+    return Array.from(document.querySelectorAll<HTMLTextAreaElement>(".dm-variant-input"))
+      .map((ta) => ta.value.trim())
+      .filter(Boolean);
+  }
+
+  requireEl("addVariantBtn").addEventListener("click", () => addVariantRow());
+
+  // =========================================================
   // RULES
   // =========================================================
   const PAGE_SIZE = 10;
@@ -98,6 +138,10 @@ function boot(): void {
     const statusBadge = rule.is_active
       ? `<span class="badge">Active</span>`
       : `<span class="badge is-off">Paused</span>`;
+    const dmPreview = escapeHtml(rule.dm_message[0]) +
+      (rule.dm_message.length > 1
+        ? ` <span style="color:var(--ink-faint);font-size:12px;">+${rule.dm_message.length - 1} variant${rule.dm_message.length > 1 ? "s" : ""}</span>`
+        : "");
     return `
       <div class="card rule-card" data-id="${rule.id}">
         <div class="rule-top">
@@ -110,8 +154,7 @@ function boot(): void {
         <div class="rule-msgs">
           <div>
             <div class="lbl">DM message</div>
-            <div class="txt">${escapeHtml(rule.dm_message[0])}${rule.dm_message.length > 1 ? ` <span style="color:var(--ink-faint);font-size:12px;">+${rule.dm_message.length - 1} variant${rule.dm_message.length > 1 ? 's' : ''}</span>` : ''}
-            </div>
+            <div class="txt">${dmPreview}</div>
           </div>
           <div>
             <div class="lbl">Public reply</div>
@@ -223,7 +266,7 @@ function boot(): void {
     }
   }
 
-  // ---------- rule modal (create / edit) ----------
+  // ---------- rule modal ----------
   const ruleModalOverlay = requireEl("ruleModalOverlay");
   const ruleForm = requireEl<HTMLFormElement>("ruleForm");
   const ruleModalTitle = requireEl("ruleModalTitle");
@@ -236,17 +279,17 @@ function boot(): void {
   function openRuleModal(id: number | null): void {
     editingRuleId = id;
     ruleForm.reset();
+    renderVariants([""]);
     ruleActiveField.style.display = editingRuleId ? "block" : "none";
 
     if (editingRuleId) {
       ruleModalTitle.textContent = "Edit rule";
       ruleSubmitBtn.textContent = "Save changes";
-      api
-        .getRule(editingRuleId)
+      api.getRule(editingRuleId)
         .then((rule) => {
           requireEl<HTMLInputElement>("ruleLink").value = rule.link;
           requireEl<HTMLInputElement>("ruleCatchphrase").value = rule.catchphrase;
-          requireEl<HTMLTextAreaElement>("ruleDm").value = rule.dm_message.join('\n');
+          renderVariants(rule.dm_message);
           requireEl<HTMLTextAreaElement>("ruleReply").value = rule.reply_message ?? "";
           ruleActiveInput.checked = rule.is_active;
           ruleActiveLabel.textContent = rule.is_active ? "Active" : "Paused";
@@ -262,6 +305,7 @@ function boot(): void {
     ruleModalOverlay.classList.add("is-open");
     requireEl("ruleLink").focus();
   }
+
   function closeRuleModal(): void {
     ruleModalOverlay.classList.remove("is-open");
     editingRuleId = null;
@@ -275,17 +319,20 @@ function boot(): void {
   requireEl("emptyNewRuleBtn").addEventListener("click", () => openRuleModal(null));
   requireEl("ruleCancelBtn").addEventListener("click", closeRuleModal);
   requireEl("ruleModalClose").addEventListener("click", closeRuleModal);
-  ruleModalOverlay.addEventListener("click", (e) => {
-    if (e.target === ruleModalOverlay) closeRuleModal();
-  });
+  ruleModalOverlay.addEventListener("click", (e) => { if (e.target === ruleModalOverlay) closeRuleModal(); });
 
   ruleForm.addEventListener("submit", (e) => {
     e.preventDefault();
     void (async () => {
       const link = requireEl<HTMLInputElement>("ruleLink").value.trim();
       const catchphrase = requireEl<HTMLInputElement>("ruleCatchphrase").value.trim();
-      const dmMessage = requireEl<HTMLTextAreaElement>("ruleDm").value.trim();
+      const dmMessages = getVariants();
       const replyMessage = requireEl<HTMLTextAreaElement>("ruleReply").value.trim();
+
+      if (dmMessages.length === 0) {
+        toast("Add at least one DM message.", "error");
+        return;
+      }
 
       ruleSubmitBtn.disabled = true;
       try {
@@ -293,7 +340,7 @@ function boot(): void {
           await api.updateRule(editingRuleId, {
             link,
             catchphrase,
-            dm_message: dmMessage.split('\n').map(s => s.trim()).filter(Boolean),
+            dm_message: dmMessages,
             reply_message: replyMessage || null,
             is_active: ruleActiveInput.checked,
           });
@@ -302,7 +349,7 @@ function boot(): void {
           await api.createRule({
             link,
             catchphrase,
-            dm_message: dmMessage.split('\n').map(s => s.trim()).filter(Boolean),
+            dm_message: dmMessages,
             reply_message: replyMessage || null,
           });
           toast("Rule created.", "ok");
@@ -343,7 +390,6 @@ function boot(): void {
     }
   }
 
-  // ---------- boot ----------
   void loadRules(1);
 }
 

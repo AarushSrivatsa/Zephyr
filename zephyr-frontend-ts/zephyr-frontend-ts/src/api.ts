@@ -1,6 +1,4 @@
 // Zephyr — API client
-// Talks to the FastAPI backend, storing JWTs in localStorage and
-// transparently refreshing the access token on a 401.
 import { API_BASE_URL } from "./config.js";
 import type {
   TokenResponse,
@@ -27,19 +25,15 @@ export class ApiError extends Error {
   }
 }
 
-// ---------------------------------------------------------------
-// Token storage
-// ---------------------------------------------------------------
-
 function getAccessToken(): string | null {
   return localStorage.getItem(STORAGE_KEYS.access);
 }
 function getRefreshToken(): string | null {
   return localStorage.getItem(STORAGE_KEYS.refresh);
 }
-function setTokens(tokens: Partial<TokenResponse>): void {
-  if (tokens.access_token) localStorage.setItem(STORAGE_KEYS.access, tokens.access_token);
-  if (tokens.refresh_token) localStorage.setItem(STORAGE_KEYS.refresh, tokens.refresh_token);
+function setTokens(t: Partial<TokenResponse>): void {
+  if (t.access_token) localStorage.setItem(STORAGE_KEYS.access, t.access_token);
+  if (t.refresh_token) localStorage.setItem(STORAGE_KEYS.refresh, t.refresh_token);
 }
 function clearTokens(): void {
   localStorage.removeItem(STORAGE_KEYS.access);
@@ -49,7 +43,6 @@ function isLoggedIn(): boolean {
   return !!getAccessToken();
 }
 
-/** Access tokens are JWTs with only {user_id, type, exp} in the payload — decode locally. */
 function decodeToken(token: string): JwtClaims | null {
   try {
     const payload = token.split(".")[1];
@@ -74,15 +67,10 @@ export const tokens = {
   decodeToken,
 };
 
-// ---------------------------------------------------------------
-// Core request plumbing
-// ---------------------------------------------------------------
-
 interface RequestOptions {
   method?: string;
   body?: unknown;
   auth?: boolean;
-  raw?: boolean;
 }
 
 let refreshInFlight: Promise<TokenResponse> | null = null;
@@ -109,7 +97,7 @@ async function refreshAccessToken(): Promise<TokenResponse> {
 }
 
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, auth = true, raw = false } = opts;
+  const { method = "GET", body, auth = true } = opts;
 
   const doFetch = (): Promise<Response> => {
     const headers: Record<string, string> = {};
@@ -149,15 +137,10 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
     throw new ApiError(detail ?? `Request failed (${res.status})`, res.status, detail);
   }
 
-  if (raw) return res as unknown as T;
   if (res.status === 204) return null as T;
   const text = await res.text();
   return (text ? JSON.parse(text) : null) as T;
 }
-
-// ---------------------------------------------------------------
-// Public API surface
-// ---------------------------------------------------------------
 
 export const loginUrl = (): string => `${API_BASE_URL}/user/login`;
 
@@ -174,7 +157,7 @@ export async function logout(): Promise<void> {
       await request(`/user/logout?refresh_token=${encodeURIComponent(rt)}`, { method: "POST" });
     }
   } catch {
-    // best-effort: still clear local tokens even if the server call fails
+    // best-effort
   } finally {
     clearTokens();
   }
@@ -183,8 +166,6 @@ export async function logout(): Promise<void> {
 export function deleteAccount(): Promise<void> {
   return request<void>("/user/me", { method: "DELETE" });
 }
-
-// -- rules --
 
 export function listRules(page = 1, limit = 10): Promise<RuleDto[]> {
   return request<RuleDto[]>(`/rules?page=${page}&limit=${limit}`);
@@ -202,18 +183,11 @@ export function deleteRule(id: number): Promise<void> {
   return request<void>(`/rules/${id}`, { method: "DELETE" });
 }
 
-// -- billing --
-
-/**
- * GET /payments/checkout responds with a redirect to the Dodo checkout
- * page. We follow it via fetch (so we can attach the Authorization header)
- * and then hand the browser the final URL via response.url.
- */
 export async function startCheckout(): Promise<string> {
-  const res = await request<{url: string}>("/payments/checkout");
+  const res = await request<{ url: string }>("/payments/checkout");
   return res.url;
 }
-/** No dedicated status endpoint exists — a cheap /rules call doubles as a probe. */
+
 export async function hasActiveSubscription(): Promise<boolean> {
   try {
     await listRules(1, 1);

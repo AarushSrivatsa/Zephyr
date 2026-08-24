@@ -1,11 +1,11 @@
 // Zephyr — shared types
-// Mirrors the shapes returned by the FastAPI backend (routers/rules.py, routers/user.py).
 
 export interface TokenResponse {
   access_token: string;
   refresh_token: string;
   token_type: string;
 }
+
 export interface RuleDto {
   id: number;
   link: string;
@@ -37,5 +37,3 @@ export interface JwtClaims {
   type?: string;
   exp?: number;
 }
-
-

@@ -124,7 +124,12 @@ async def update_rule(rule_id: int, rule_update: RuleUpdate, db: AsyncSession = 
     for field, value in update_data.items():
         setattr(rule, field, value)
 
-    await db.flush()
+    
+    try:
+        await db.flush()
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail='A rule with this catchphrase already exists for that post')
+    
     await db.refresh(rule)
 
     return rule

@@ -13,6 +13,8 @@ async def extract_media_id(url: str, user: UserModel) -> dict:
         raise HTTPException(status_code=400, detail='Invalid Instagram URL')
 
     # get user access token
+    if not user.encrypted_instagram_access_token:
+        raise HTTPException(status_code=400, detail='No Instagram account connected')
     access_token = decrypt(user.encrypted_instagram_access_token)
 
     next_url = f'https://graph.instagram.com/v25.0/{user.user_id}/media'

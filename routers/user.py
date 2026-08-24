@@ -114,13 +114,17 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
     ))
 
     # Step 6: Subscribe to Instagram webhook events
-    await client.post(
-        f'https://graph.instagram.com/v25.0/{user_data["user_id"]}/subscribed_apps',
-        params={
-            'subscribed_fields': 'comments,messages',
-            'access_token': long_lived_token
-        }
-    )
+# wrap it
+    try:
+        await client.post(
+            f'https://graph.instagram.com/v25.0/{user_data["user_id"]}/subscribed_apps',
+            params={
+                'subscribed_fields': 'comments,messages',
+                'access_token': long_lived_token
+            }
+        )
+    except Exception as e:
+        print(f'Webhook subscription failed: {e}')
 
     return {
         'access_token': create_access_token(user_data['user_id']),
@@ -169,10 +173,13 @@ async def logout(refresh_token: str, db: AsyncSession = Depends(get_db), user: U
 async def delete_account(db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
     # Unsubscribe from Instagram webhooks
     access_token = decrypt(user.encrypted_instagram_access_token)
-    await client.delete(
-        f'https://graph.instagram.com/v25.0/{user.user_id}/subscribed_apps',
-        params={'access_token': access_token}
-    )
+    try:
+        await client.delete(
+            f'https://graph.instagram.com/v25.0/{user.user_id}/subscribed_apps',
+            params={'access_token': access_token}
+        )
+    except Exception as e:
+        print(f'Webhook unsubscribe failed: {e}')
 
     # Revoke all sessions
     await db.execute(delete(RefreshTokenModel).where(RefreshTokenModel.user_id == user.user_id))
