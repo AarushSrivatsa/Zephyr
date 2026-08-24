@@ -1,8 +1,8 @@
 from dodopayments import AsyncDodoPayments
-from settings import DODO_API_KEY, DODO_WEBHOOK_SECRET
+from settings import DODO_API_KEY, DODO_WEBHOOK_SECRET, DODO_ENVIRONMENT
 
 dodo = AsyncDodoPayments(
     bearer_token=DODO_API_KEY,
-    environment='test_mode',
+    environment=DODO_ENVIRONMENT,
     webhook_key=DODO_WEBHOOK_SECRET
 )

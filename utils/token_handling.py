@@ -61,11 +61,27 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(b
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
     
     subscription = user.subscription
-    
+    if not subscription:
+        raise HTTPException(status_code=403, detail='No active subscription')
+    billing_date = subscription.next_billing_date
+        
     billing_date = subscription.next_billing_date
     if billing_date.tzinfo is None:
         billing_date = billing_date.replace(tzinfo=timezone.utc)
     if billing_date < datetime.now(timezone.utc):
         raise HTTPException(status_code=403, detail='No active subscription')
 
+    return user
+
+# utils/token_handling.py
+async def get_current_user_any(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_db)
+):
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    result = await db.execute(select(UserModel).where(UserModel.user_id == payload['user_id']))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
     return user

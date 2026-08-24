@@ -24,6 +24,7 @@ VERIFY_TOKEN = os.getenv('VERIFY_TOKEN')
 DODO_API_KEY = os.getenv('DODO_API_KEY')
 DODO_WEBHOOK_SECRET = os.getenv('DODO_WEBHOOK_SECRET')
 DODO_PRODUCT_ID = os.getenv('DODO_PRODUCT_ID')
+DODO_ENVIRONMENT = os.getenv('DODO_ENVIRONMENT','test_mode')
 
 R2_PUBLIC_URL = os.getenv('R2_PUBLIC_URL')
 R2_ACCOUNT_ID = os.getenv('R2_ACCOUNT_ID', '').strip()  # strip trailing whitespace

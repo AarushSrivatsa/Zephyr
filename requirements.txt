@@ -11,6 +11,5 @@ cryptography
 pyjwt
 dodopayments
 apscheduler
-slowapi
 cloudflare
 python-multipart

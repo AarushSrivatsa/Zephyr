@@ -58,6 +58,17 @@ async def receive_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     if not comments:
         return {'status': 'ok'}
 
+    # Step 1.5: dedupe within this single payload (Instagram can send the same comment twice)
+    seen_ids = set()
+    deduped_comments = []
+    for c in comments:
+        comment_id = c[2]
+        if comment_id in seen_ids:
+            continue
+        seen_ids.add(comment_id)
+        deduped_comments.append(c)
+    comments = deduped_comments
+
     # Step 2: Batch duplicate check
     comment_ids = [c[2] for c in comments]
     existing = await db.execute(

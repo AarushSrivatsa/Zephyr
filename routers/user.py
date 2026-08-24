@@ -13,7 +13,7 @@ from settings import REFRESH_TOKEN_EXPIRE_DAYS
 from sqlalchemy import delete
 from fastapi import status
 from fastapi.exceptions import HTTPException
-from utils.token_handling import get_current_user
+from utils.token_handling import get_current_user, get_current_user_any
 
 router = APIRouter(prefix='/user', tags=['User'])
 
@@ -65,7 +65,13 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
         }
     )
     long_lived_data = long_lived_response.json()
+
+    if 'access_token' not in long_lived_data:
+        raise HTTPException(status_code=400, detail=f"Long-lived token exchange failed: {long_lived_data}")
     long_lived_token = long_lived_data['access_token']
+
+    expires_in_seconds = long_lived_data.get('expires_in', 5184000)  # fallback ~60 days if missing
+
     expires_in_seconds = long_lived_data['expires_in']
 
     # Step 3: Fetch user info
@@ -77,6 +83,8 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
         }
     )
     user_data = user_response.json()
+    if 'user_id' not in user_data:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch Instagram profile: {user_data}")
 
     # Step 4: Encrypt token
     encrypted_token = encrypt(long_lived_token)
@@ -162,7 +170,7 @@ async def refresh(refresh_token: str, db: AsyncSession = Depends(get_db)):
     }
 
 @router.post('/logout')
-async def logout(refresh_token: str, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
+async def logout(refresh_token: str, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user_any)):
     await db.execute(delete(RefreshTokenModel).where(
         RefreshTokenModel.token == refresh_token,
         RefreshTokenModel.user_id == user.user_id
@@ -170,7 +178,7 @@ async def logout(refresh_token: str, db: AsyncSession = Depends(get_db), user: U
     return {'message': 'Logged out successfully'}
 
 @router.delete('/me')
-async def delete_account(db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
+async def delete_account(db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user_any)):
     # Unsubscribe from Instagram webhooks
     access_token = decrypt(user.encrypted_instagram_access_token)
     try:

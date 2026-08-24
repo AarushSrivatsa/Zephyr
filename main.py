@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from contextlib import asynccontextmanager
 from utils.http_client import client
 from routers.payments import router as payments_router
@@ -39,8 +39,19 @@ for router in router_list:
 # ---------------------------------------------------------------
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
 
-app.mount("/css", StaticFiles(directory=os.path.join(FRONTEND_DIR, "css")), name="css")
-app.mount("/js", StaticFiles(directory=os.path.join(FRONTEND_DIR, "js")), name="js")
+# Custom static file class that disables caching, so a fresh deploy is
+# always picked up immediately instead of the browser/Cloudflare serving
+# an old cached js/css bundle.
+class NoCacheStaticFiles(StaticFiles):
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
+app.mount("/css", NoCacheStaticFiles(directory=os.path.join(FRONTEND_DIR, "css")), name="css")
+app.mount("/js", NoCacheStaticFiles(directory=os.path.join(FRONTEND_DIR, "js")), name="js")
 
 @app.get("/", include_in_schema=False)
 async def serve_index():
@@ -52,10 +63,6 @@ async def serve_dashboard():
     return FileResponse(os.path.join(FRONTEND_DIR, "dashboard.html"))
 
 @app.get("/login-callback.html", include_in_schema=False)
-async def serve_login_callback():
-    return FileResponse(os.path.join(FRONTEND_DIR, "login-callback.html"))
-
 @app.get("/callback", include_in_schema=False)
-@app.get("/login-callback.html", include_in_schema=False)
 async def serve_login_callback():
     return FileResponse(os.path.join(FRONTEND_DIR, "login-callback.html"))

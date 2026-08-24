@@ -12,6 +12,15 @@ if (!api.tokens.isLoggedIn()) {
 }
 
 function boot(): void {
+  try {
+    bootInner();
+  } catch (e) {
+    console.error("Dashboard failed to initialize:", e);
+    toast("Something went wrong loading the dashboard. Try refreshing.", "error");
+  }
+}
+
+function bootInner(): void {
   const claims = api.tokens.decodeToken(api.tokens.get()!);
   const userId = claims?.user_id ?? "unknown";
   requireEl("railUserId").textContent = userId;
@@ -378,20 +387,20 @@ function boot(): void {
   }
   requireEl("billingCheckoutBtn").addEventListener("click", () => void openCheckout());
 
-async function refreshBillingStatus(): Promise<void> {
-  const el = requireEl("billingStatus");
-  const btn = requireEl("billingCheckoutBtn");
-  el.textContent = "Checking…";
-  try {
-    const active = await api.hasActiveSubscription();
-    el.textContent = active ? "Active" : "Inactive — subscribe to continue";
-    el.style.color = active ? "var(--teal-deep)" : "var(--accent-deep)";
-    btn.style.display = active ? "none" : "block";
-  } catch {
-    el.textContent = "Unknown";
-    btn.style.display = "block";
+  async function refreshBillingStatus(): Promise<void> {
+    const el = requireEl("billingStatus");
+    const btn = requireEl("billingCheckoutBtn");
+    el.textContent = "Checking…";
+    try {
+      const active = await api.hasActiveSubscription();
+      el.textContent = active ? "Active" : "Inactive — subscribe to continue";
+      el.style.color = active ? "var(--teal-deep)" : "var(--accent-deep)";
+      btn.style.display = active ? "none" : "block";
+    } catch {
+      el.textContent = "Unknown";
+      btn.style.display = "block";
+    }
   }
-}
 
   void loadRules(1);
 }
