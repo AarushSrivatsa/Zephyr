@@ -6,12 +6,11 @@ export interface TokenResponse {
   refresh_token: string;
   token_type: string;
 }
-
 export interface RuleDto {
   id: number;
   link: string;
   catchphrase: string;
-  dm_message: string;
+  dm_message: string[];
   reply_message: string | null;
   is_active: boolean;
   count: number;
@@ -21,15 +20,14 @@ export interface RuleDto {
 export interface RuleCreateRequest {
   link: string;
   catchphrase: string;
-  dm_message: string;
+  dm_message: string[];
   reply_message: string | null;
 }
 
-/** Partial update — only send the fields you actually want to change. */
 export interface RuleUpdateRequest {
   link?: string;
   catchphrase?: string;
-  dm_message?: string;
+  dm_message?: string[];
   reply_message?: string | null;
   is_active?: boolean;
 }
@@ -39,3 +37,5 @@ export interface JwtClaims {
   type?: string;
   exp?: number;
 }
+
+

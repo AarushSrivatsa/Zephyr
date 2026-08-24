@@ -110,7 +110,8 @@ function boot(): void {
         <div class="rule-msgs">
           <div>
             <div class="lbl">DM message</div>
-            <div class="txt">${escapeHtml(rule.dm_message)}</div>
+            <div class="txt">${escapeHtml(rule.dm_message[0])}${rule.dm_message.length > 1 ? ` <span style="color:var(--ink-faint);font-size:12px;">+${rule.dm_message.length - 1} variant${rule.dm_message.length > 1 ? 's' : ''}</span>` : ''}
+            </div>
           </div>
           <div>
             <div class="lbl">Public reply</div>
@@ -245,7 +246,7 @@ function boot(): void {
         .then((rule) => {
           requireEl<HTMLInputElement>("ruleLink").value = rule.link;
           requireEl<HTMLInputElement>("ruleCatchphrase").value = rule.catchphrase;
-          requireEl<HTMLTextAreaElement>("ruleDm").value = rule.dm_message;
+          requireEl<HTMLTextAreaElement>("ruleDm").value = rule.dm_message.join('\n');
           requireEl<HTMLTextAreaElement>("ruleReply").value = rule.reply_message ?? "";
           ruleActiveInput.checked = rule.is_active;
           ruleActiveLabel.textContent = rule.is_active ? "Active" : "Paused";
@@ -292,7 +293,7 @@ function boot(): void {
           await api.updateRule(editingRuleId, {
             link,
             catchphrase,
-            dm_message: dmMessage,
+            dm_message: dmMessage.split('\n').map(s => s.trim()).filter(Boolean),
             reply_message: replyMessage || null,
             is_active: ruleActiveInput.checked,
           });
@@ -301,7 +302,7 @@ function boot(): void {
           await api.createRule({
             link,
             catchphrase,
-            dm_message: dmMessage,
+            dm_message: dmMessage.split('\n').map(s => s.trim()).filter(Boolean),
             reply_message: replyMessage || null,
           });
           toast("Rule created.", "ok");

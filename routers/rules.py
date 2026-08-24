@@ -7,6 +7,7 @@ from pydantic import BaseModel, field_validator
 from utils.media_id_extraction import extract_media_id
 from datetime import datetime
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter(prefix='/rules', tags=['Rules'])
 
@@ -42,6 +43,7 @@ class RuleResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 @router.post('', response_model=RuleResponse)
 async def create_rule(rule: RuleCreate, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
     media_info = await extract_media_id(url=rule.link, user=user)
@@ -56,9 +58,11 @@ async def create_rule(rule: RuleCreate, db: AsyncSession = Depends(get_db), user
     )
 
     db.add(new_rule)
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail='A rule with this catchphrase already exists for that post')
     await db.refresh(new_rule)
-
     return new_rule
 
 @router.get('', response_model=list[RuleResponse])
