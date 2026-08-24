@@ -18,7 +18,7 @@ async def create_checkout(user: UserModel = Depends(get_current_user)):
             metadata={'user_id': user.user_id},
             return_url='https://zephyr-m5w7.onrender.com/dashboard'
         )
-        return RedirectResponse(session.checkout_url)
+        return {'url': session.checkout_url}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
