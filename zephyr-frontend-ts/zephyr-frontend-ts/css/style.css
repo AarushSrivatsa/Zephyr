@@ -221,3 +221,15 @@ input:focus, textarea:focus{
 }
 
 :focus-visible{ outline: 2px solid var(--teal); outline-offset: 2px; }
+
+.rule-top-main{
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.rule-catch{
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+.rule-top .badge{
+    flex: none;
+}

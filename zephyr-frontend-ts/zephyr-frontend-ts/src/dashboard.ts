@@ -153,8 +153,8 @@ function bootInner(): void {
         : "");
     return `
       <div class="card rule-card" data-id="${rule.id}">
-        <div class="rule-top">
-          <div>
+      <div class="rule-top">
+          <div class="rule-top-main">
             <div class="rule-catch">"${escapeHtml(rule.catchphrase)}"</div>
             <div class="rule-link"><a href="${escapeHtml(rule.link)}" target="_blank" rel="noopener">${escapeHtml(rule.link)}</a></div>
           </div>
