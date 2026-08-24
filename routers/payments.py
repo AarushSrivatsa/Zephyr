@@ -10,12 +10,24 @@ from settings import DODO_PRODUCT_ID
 
 router = APIRouter(prefix='/payments', tags=['Payments'])
 
+from utils.token_handling import get_current_user, decode_access_token
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Security
+
+bearer_scheme = HTTPBearer()
+
 @router.get('/checkout')
-async def create_checkout(user: UserModel = Depends(get_current_user)):
+async def create_checkout(
+    credentials: HTTPAuthorizationCredentials = Security(bearer_scheme),
+    db: AsyncSession = Depends(get_db)
+):
+    payload = decode_access_token(credentials.credentials)
+    user_id = payload['user_id']
+    
     try:
         session = await dodo.checkout_sessions.create(
             product_cart=[{'product_id': DODO_PRODUCT_ID, 'quantity': 1}],
-            metadata={'user_id': user.user_id},
+            metadata={'user_id': user_id},
             return_url='https://zephyr-m5w7.onrender.com/dashboard'
         )
         return {'url': session.checkout_url}
