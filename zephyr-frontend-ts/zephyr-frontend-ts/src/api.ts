@@ -210,10 +210,9 @@ export function deleteRule(id: number): Promise<void> {
  * and then hand the browser the final URL via response.url.
  */
 export async function startCheckout(): Promise<string> {
-  const res = await request<Response>("/payments/checkout", { raw: true });
+  const res = await request<{url: string}>("/payments/checkout");
   return res.url;
 }
-
 /** No dedicated status endpoint exists — a cheap /rules call doubles as a probe. */
 export async function hasActiveSubscription(): Promise<boolean> {
   try {
