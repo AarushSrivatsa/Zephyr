@@ -12,6 +12,6 @@ for (const id of ["heroConnectBtn", "navConnectBtn", "pricingConnectBtn"]) {
 if (tokens.isLoggedIn()) {
   const navConnect = document.getElementById("navConnectBtn");
   const navDash = document.getElementById("navDashboardLink");
-  if (navConnect) navConnect.textContent = "Reconnect Instagram";
+  if (navConnect) navConnect.style.display = "none";
   if (navDash) navDash.style.display = "inline-flex";
 }
