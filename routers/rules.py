@@ -17,6 +17,22 @@ class RuleCreate(BaseModel):
     dm_message: list[str]
     reply_message: str | None = None
 
+    @field_validator('dm_message', mode='before')
+    @classmethod
+    def coerce_dm_message(cls, v):
+        # guards against a bare string being iterated char-by-char by list[str]
+        if isinstance(v, str):
+            return [v]
+        return v
+
+    @field_validator('dm_message')
+    @classmethod
+    def dm_message_not_empty(cls, v: list[str]) -> list[str]:
+        cleaned = [m.strip() for m in v if m and m.strip()]
+        if not cleaned:
+            raise ValueError('dm_message must contain at least one non-empty message')
+        return cleaned
+
 class RuleResponse(BaseModel):
     id: int
     link: str
@@ -93,6 +109,16 @@ class RuleUpdate(BaseModel):
         if isinstance(v, str):
             return [v]
         return v
+
+    @field_validator('dm_message')
+    @classmethod
+    def dm_message_not_empty(cls, v: list[str] | None) -> list[str] | None:
+        if v is None:
+            return v
+        cleaned = [m.strip() for m in v if m and m.strip()]
+        if not cleaned:
+            raise ValueError('dm_message must contain at least one non-empty message')
+        return cleaned
 
 @router.patch('/{rule_id}', response_model=RuleResponse)
 async def update_rule(rule_id: int, rule_update: RuleUpdate, db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user)):
