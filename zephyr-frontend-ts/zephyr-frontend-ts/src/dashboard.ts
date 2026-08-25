@@ -4,6 +4,61 @@ import { ApiError } from "./api.js";
 import type { RuleDto } from "./types.js";
 import { toast, escapeHtml, formatDate, requireEl } from "./ui.js";
 
+// =========================================================
+// dm_message normalization
+// =========================================================
+// The backend is expected to return dm_message as a real JSON array
+// (string[]). In practice some rows can come back as a raw Postgres
+// array-literal string instead — e.g. "{hello}" for a single message,
+// or "{a,b,\"c,d\"}" for several. Left untouched, that string would get
+// treated as an array of individual characters. These helpers parse
+// that literal syntax properly so the UI always ends up with a clean
+// string[], regardless of which shape the API gave us.
+
+function parsePgTextArray(raw: string): string[] {
+  const inner = raw.slice(1, -1); // strip leading "{" and trailing "}"
+  if (inner === "") return [];
+
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < inner.length; i++) {
+    const ch = inner[i];
+    if (inQuotes) {
+      if (ch === "\\" && i + 1 < inner.length) {
+        current += inner[i + 1];
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        current += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ",") {
+      result.push(current);
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function normalizeDmMessages(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw as string[];
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+      return parsePgTextArray(trimmed);
+    }
+    return trimmed ? [trimmed] : [];
+  }
+  return [];
+}
+
 if (!api.tokens.isLoggedIn()) {
   requireEl("authGate").style.display = "block";
 } else {
@@ -87,14 +142,10 @@ function bootInner(): void {
   // =========================================================
   // DM VARIANTS
   // =========================================================
-  function renderVariants(messages: string[]): void {
+  function renderVariants(messages: unknown): void {
     const container = requireEl("dmVariants");
     container.innerHTML = "";
-    // Guard against a plain string sneaking in here (e.g. stale/legacy
-    // data where dm_message was stored as a single string instead of an
-    // array). Strings are iterable, so without this guard
-    // toRender.forEach() below would split it into one box per character.
-    const list = Array.isArray(messages) ? messages : [messages];
+    const list = normalizeDmMessages(messages);
     const toRender = list.length ? list : [""];
     toRender.forEach((msg) => addVariantRow(msg));
   }
@@ -149,12 +200,13 @@ function bootInner(): void {
   const subBannerText = requireEl("subBannerText");
 
   function ruleCardHtml(rule: RuleDto): string {
+    const dmMessages = normalizeDmMessages(rule.dm_message);
     const statusBadge = rule.is_active
       ? `<span class="badge">Active</span>`
       : `<span class="badge is-off">Paused</span>`;
-    const dmPreview = escapeHtml(rule.dm_message[0]) +
-      (rule.dm_message.length > 1
-        ? ` <span style="color:var(--ink-faint);font-size:12px;">+${rule.dm_message.length - 1} variant${rule.dm_message.length > 1 ? "s" : ""}</span>`
+    const dmPreview = escapeHtml(dmMessages[0] ?? "") +
+      (dmMessages.length > 1
+        ? ` <span style="color:var(--ink-faint);font-size:12px;">+${dmMessages.length - 1} variant${dmMessages.length > 2 ? "s" : ""}</span>`
         : "");
     return `
       <div class="card rule-card" data-id="${rule.id}">
