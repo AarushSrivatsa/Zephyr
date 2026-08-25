@@ -3,14 +3,18 @@ from sqlalchemy.orm import DeclarativeBase
 from settings import DATABASE_URL, DEBUG
 
 engine = create_async_engine(
-	url=DATABASE_URL,
-	pool_size=10,
-	max_overflow=20,
-	pool_timeout=30, 
-	echo=DEBUG,
-	pool_pre_ping=True,
-	pool_recycle=1800,
-	connect_args={"ssl": "require"})
+    url=DATABASE_URL,
+    pool_size=10,
+    max_overflow=20,
+    pool_timeout=30,
+    echo=DEBUG,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+    connect_args={
+        "ssl": "require",
+        "statement_cache_size": 0  # ← add this
+    }
+)
 
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
