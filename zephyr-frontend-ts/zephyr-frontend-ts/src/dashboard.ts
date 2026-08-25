@@ -90,7 +90,12 @@ function bootInner(): void {
   function renderVariants(messages: string[]): void {
     const container = requireEl("dmVariants");
     container.innerHTML = "";
-    const toRender = messages.length ? messages : [""];
+    // Guard against a plain string sneaking in here (e.g. stale/legacy
+    // data where dm_message was stored as a single string instead of an
+    // array). Strings are iterable, so without this guard
+    // toRender.forEach() below would split it into one box per character.
+    const list = Array.isArray(messages) ? messages : [messages];
+    const toRender = list.length ? list : [""];
     toRender.forEach((msg) => addVariantRow(msg));
   }
 
