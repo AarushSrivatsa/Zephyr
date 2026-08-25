@@ -50,7 +50,7 @@ async def wipe_deleted_users():
         result = await db.execute(
             delete(UserModel).where(
                 UserModel.deleted_at.isnot(None),
-                UserModel.deleted_at < datetime.now(timezone.utc) - timedelta(days=15)
+                UserModel.deleted_at < datetime.now(timezone.utc) - timedelta(days=30)
             )
         )
         await db.commit()
