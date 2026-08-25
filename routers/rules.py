@@ -17,19 +17,6 @@ class RuleCreate(BaseModel):
     dm_message: list[str]
     reply_message: str | None = None
 
-    @field_validator('catchphrase')
-    @classmethod
-    def normalize_catchphrase(cls, v: str) -> str:
-        return v.strip().lower()
-
-    @field_validator('dm_message', mode='before')
-    @classmethod
-    def coerce_dm_message(cls, v):
-        # accept a bare string from the frontend — wrap it in a list
-        if isinstance(v, str):
-            return [v]
-        return v
-
 class RuleResponse(BaseModel):
     id: int
     link: str
