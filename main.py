@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, RedirectResponse
 from contextlib import asynccontextmanager
 from utils.http_client import client
 from routers.payments import router as payments_router
@@ -53,14 +53,28 @@ class NoCacheStaticFiles(StaticFiles):
 app.mount("/css", NoCacheStaticFiles(directory=os.path.join(FRONTEND_DIR, "css")), name="css")
 app.mount("/js", NoCacheStaticFiles(directory=os.path.join(FRONTEND_DIR, "js")), name="js")
 
+# ---------------------------------------------------------------
+# Clean URLs: every canonical page has exactly one clean path.
+# Legacy/relative ".html" hits get redirected to the clean path so
+# stray links (and browser relative-URL resolution) never 404 and
+# ".html" never shows up in the address bar.
+# ---------------------------------------------------------------
+
 @app.get("/", include_in_schema=False)
 async def serve_index():
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
+@app.get("/index.html", include_in_schema=False)
+async def redirect_index_html():
+    return RedirectResponse(url="/", status_code=307)
+
 @app.get("/dashboard", include_in_schema=False)
-@app.get("/dashboard.html", include_in_schema=False)
 async def serve_dashboard():
     return FileResponse(os.path.join(FRONTEND_DIR, "dashboard.html"))
+
+@app.get("/dashboard.html", include_in_schema=False)
+async def redirect_dashboard_html():
+    return RedirectResponse(url="/dashboard", status_code=307)
 
 @app.get("/login-callback.html", include_in_schema=False)
 @app.get("/callback", include_in_schema=False)
