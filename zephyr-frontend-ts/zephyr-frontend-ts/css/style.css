@@ -1,35 +1,35 @@
 /* =========================================================
    Zephyr — design tokens
-   A wind-instrument palette: windsock orange against
-   overcast paper, deep teal for secondary signal.
+   Neon theme: near-black surfaces, neon magenta accent,
+   neon cyan secondary signal.
    ========================================================= */
 :root{
-  --bg:        #EFF1E9;
-  --bg-dim:    #E4E7DB;
-  --surface:   #FBFBF7;
-  --ink:       #191F1B;
-  --ink-soft:  #52605A;
-  --ink-faint: #8B968F;
-  --line:      rgba(25,31,27,0.14);
-  --line-strong: rgba(25,31,27,0.28);
+  --bg:        #07070d;
+  --bg-dim:    #0c0d16;
+  --surface:   #12131f;
+  --ink:       #eef6ff;
+  --ink-soft:  #a9b6c9;
+  --ink-faint: #66748a;
+  --line:      rgba(0, 255, 234, 0.16);
+  --line-strong: rgba(0, 255, 234, 0.38);
 
-  --accent:      #FF5A36;
-  --accent-deep: #B23D22;
-  --accent-soft: #FFE4DA;
+  --accent:      #ff2ee0;
+  --accent-deep: #c400ac;
+  --accent-soft: rgba(255, 46, 224, 0.14);
 
-  --teal:      #1F5E5B;
-  --teal-soft: #E1EDEA;
-  --teal-deep: #163F3D;
+  --teal:      #00f0ff;
+  --teal-soft: rgba(0, 240, 255, 0.12);
+  --teal-deep: #00b8c4;
 
-  --danger:    #B23D22;
-  --ok:        #1F5E5B;
+  --danger:    #ff3860;
+  --ok:        #00f0ff;
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 18px;
 
-  --shadow-card: 0 1px 2px rgba(25,31,27,0.06), 0 8px 24px rgba(25,31,27,0.05);
-  --shadow-pop:  0 12px 40px rgba(25,31,27,0.18);
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.4), 0 0 24px rgba(0, 240, 255, 0.06);
+  --shadow-pop:  0 12px 40px rgba(0,0,0,0.6), 0 0 40px rgba(255, 46, 224, 0.12);
 
   --font-display: 'Space Grotesk', 'IBM Plex Sans', sans-serif;
   --font-body:    'IBM Plex Sans', sans-serif;
@@ -82,12 +82,13 @@ p{ margin: 0 0 1em; color: var(--ink-soft); }
   border-radius: 50%;
   background: var(--accent);
   display: inline-block;
+  box-shadow: 0 0 8px var(--accent);
 }
 
 /* ---------- buttons ---------- */
 .btn{
   --btn-bg: var(--ink);
-  --btn-fg: var(--surface);
+  --btn-fg: var(--bg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -109,16 +110,16 @@ p{ margin: 0 0 1em; color: var(--ink-soft); }
 .btn:active{ transform: translateY(0); }
 .btn:disabled{ opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
 
-.btn-accent{ --btn-bg: var(--accent); --btn-fg: #FFF6F3; }
-.btn-accent:hover{ background: var(--accent-deep); }
+.btn-accent{ --btn-bg: var(--accent); --btn-fg: #150014; box-shadow: 0 0 18px rgba(255, 46, 224, 0.35); }
+.btn-accent:hover{ background: var(--accent-deep); box-shadow: 0 0 26px rgba(255, 46, 224, 0.55); }
 .btn-outline{ --btn-bg: transparent; --btn-fg: var(--ink); border-color: var(--line-strong); }
-.btn-outline:hover{ background: rgba(25,31,27,0.05); }
-.btn-teal{ --btn-bg: var(--teal); --btn-fg: #F1FBF9; }
+.btn-outline:hover{ background: rgba(0, 240, 255, 0.06); }
+.btn-teal{ --btn-bg: var(--teal); --btn-fg: #001417; box-shadow: 0 0 18px rgba(0, 240, 255, 0.3); }
 .btn-teal:hover{ background: var(--teal-deep); }
 .btn-ghost{ --btn-bg: transparent; --btn-fg: var(--ink-soft); padding: 10px 14px; }
-.btn-ghost:hover{ background: rgba(25,31,27,0.05); box-shadow: none; }
-.btn-danger{ --btn-bg: transparent; --btn-fg: var(--danger); border-color: rgba(178,61,34,0.35); }
-.btn-danger:hover{ background: var(--accent-soft); }
+.btn-ghost:hover{ background: rgba(0, 240, 255, 0.06); box-shadow: none; }
+.btn-danger{ --btn-bg: transparent; --btn-fg: var(--danger); border-color: rgba(255,56,96,0.35); }
+.btn-danger:hover{ background: rgba(255,56,96,0.1); }
 .btn-sm{ padding: 8px 14px; font-size: 13.5px; }
 .btn-block{ width: 100%; }
 
@@ -180,10 +181,10 @@ input:focus, textarea:focus{
   font-size: 11.5px; letter-spacing: .04em;
   padding: 4px 10px;
   border-radius: 999px;
-  background: var(--teal-soft); color: var(--teal-deep);
+  background: var(--teal-soft); color: var(--teal);
 }
-.badge.is-off{ background: rgba(25,31,27,0.08); color: var(--ink-faint); }
-.badge.is-warn{ background: var(--accent-soft); color: var(--accent-deep); }
+.badge.is-off{ background: rgba(255,255,255,0.06); color: var(--ink-faint); }
+.badge.is-warn{ background: var(--accent-soft); color: var(--accent); }
 
 /* ---------- utility ---------- */
 .visually-hidden{
@@ -191,7 +192,7 @@ input:focus, textarea:focus{
 }
 .spinner{
   width: 18px; height: 18px; border-radius: 50%;
-  border: 2.5px solid rgba(25,31,27,0.15);
+  border: 2.5px solid rgba(0, 240, 255, 0.15);
   border-top-color: var(--teal);
   animation: spin .7s linear infinite;
   flex: none;
@@ -204,14 +205,15 @@ input:focus, textarea:focus{
 }
 .toast{
   font-family: var(--font-body); font-size: 14px;
-  background: var(--ink); color: var(--surface);
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line-strong);
   padding: 12px 16px; border-radius: var(--radius-sm);
   box-shadow: var(--shadow-pop);
   max-width: 320px;
   animation: toast-in .2s ease;
 }
-.toast.is-error{ background: var(--accent-deep); }
-.toast.is-ok{ background: var(--teal-deep); }
+.toast.is-error{ border-color: var(--danger); color: var(--danger); }
+.toast.is-ok{ border-color: var(--teal); color: var(--teal); }
 @keyframes toast-in{ from{ opacity:0; transform: translateY(8px);} to{opacity:1; transform:none;} }
 
 @media (prefers-reduced-motion: reduce){
