@@ -15,7 +15,7 @@ class RuleCreate(BaseModel):
     link: str
     catchphrase: str
     dm_message: list[str]
-    reply_message: str | None = None
+    reply_message: list[str] | None = None
     is_case_sensitive: bool = False
 
     @field_validator('catchphrase')
@@ -115,7 +115,7 @@ class RuleUpdate(BaseModel):
     link: str | None = None
     catchphrase: str | None = None
     dm_message: list[str] | None = None
-    reply_message: str | None = None
+    reply_message: list[str] | None = None
     is_active: bool | None = None
     is_case_sensitive: bool | None = None
 
