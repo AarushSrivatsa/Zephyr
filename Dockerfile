@@ -23,9 +23,9 @@ RUN mkdir -p frontend/css frontend/js
 COPY zephyr-frontend-ts/zephyr-frontend-ts/index.html frontend/
 COPY zephyr-frontend-ts/zephyr-frontend-ts/dashboard.html frontend/
 COPY zephyr-frontend-ts/zephyr-frontend-ts/login-callback.html frontend/
+COPY zephyr-frontend-ts/zephyr-frontend-ts/data-deletion.html frontend/
 COPY zephyr-frontend-ts/zephyr-frontend-ts/css/ frontend/css/
 COPY --from=frontend-build /frontend/js/ frontend/js/
-
 EXPOSE 8000
 
 CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

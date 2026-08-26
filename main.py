@@ -80,3 +80,7 @@ async def redirect_dashboard_html():
 @app.get("/callback", include_in_schema=False)
 async def serve_login_callback():
     return FileResponse(os.path.join(FRONTEND_DIR, "login-callback.html"))
+
+@app.get("/data-deletion", include_in_schema=False)
+async def serve_data_deletion():
+    return FileResponse(os.path.join(FRONTEND_DIR, "data-deletion.html"))
