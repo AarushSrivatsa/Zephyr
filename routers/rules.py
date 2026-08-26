@@ -40,12 +40,27 @@ class RuleCreate(BaseModel):
             raise ValueError('dm_message must contain at least one non-empty message')
         return cleaned
 
+    @field_validator('reply_message', mode='before')
+    @classmethod
+    def coerce_reply_message(cls, v):
+            if isinstance(v, str):
+                return [v]
+            return v
+
+    @field_validator('reply_message')
+    @classmethod
+    def clean_reply_message(cls, v: list[str] | None) -> list[str] | None:
+            if v is None:
+                return v
+            cleaned = [m.strip() for m in v if m and m.strip()]
+            return cleaned or None
+
 class RuleResponse(BaseModel):
     id: int
     link: str
     catchphrase: str
     dm_message: list[str]
-    reply_message: str | None
+    reply_message: list[str] | None
     is_active: bool
     is_case_sensitive: bool
     count: int

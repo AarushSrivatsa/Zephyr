@@ -43,7 +43,7 @@ class RuleModel(Base):
     media_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     catchphrase: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     dm_message: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False)
-    reply_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default=None)
+    reply_message: Mapped[Optional[list[str]]] = mapped_column(ARRAY(Text), nullable=True, default=None)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     count: Mapped[int] = mapped_column(Integer, server_default='0')

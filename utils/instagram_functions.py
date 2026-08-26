@@ -151,8 +151,9 @@ async def process_webhook(data: dict, db: AsyncSession):
 
             if sent:
                 if rule.reply_message:
+                    reply_text = random.choice(rule.reply_message)
                     print(f'Sending reply for comment {comment_id}')
-                    await send_reply(comment_id, rule.reply_message, access_token)
+                    await send_reply(comment_id, reply_text, access_token)
                 db.add(DMLogsModel(
                     commenter_ig_id=commenter_id,
                     media_id=media_id,
