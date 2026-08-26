@@ -124,13 +124,14 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
     # Step 6: Subscribe to Instagram webhook events
 # wrap it
     try:
-        await client.post(
+        sub_response = await client.post(
             f'https://graph.instagram.com/v25.0/{user_data["user_id"]}/subscribed_apps',
             params={
                 'subscribed_fields': 'comments,messages',
                 'access_token': long_lived_token
             }
         )
+        print(f'Webhook subscription response: {sub_response.status_code} {sub_response.text}')
     except Exception as e:
         print(f'Webhook subscription failed: {e}')
 
