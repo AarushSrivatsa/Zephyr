@@ -6,6 +6,7 @@ import type {
   RuleCreateRequest,
   RuleUpdateRequest,
   JwtClaims,
+  UserProfile,
 } from "./types.js";
 
 const STORAGE_KEYS = {
@@ -24,7 +25,9 @@ export class ApiError extends Error {
     this.detail = detail;
   }
 }
-
+export function getMe(): Promise<UserProfile> {
+  return request<UserProfile>("/user/me");
+}
 function getAccessToken(): string | null {
   return localStorage.getItem(STORAGE_KEYS.access);
 }

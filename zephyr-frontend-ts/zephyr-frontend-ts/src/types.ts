@@ -40,3 +40,9 @@ export interface JwtClaims {
   type?: string;
   exp?: number;
 }
+
+export interface UserProfile {
+  user_id: string;
+  username: string;
+  profile_pic_url: string;
+}

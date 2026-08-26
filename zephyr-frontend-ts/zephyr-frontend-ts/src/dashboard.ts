@@ -76,11 +76,29 @@ function boot(): void {
 }
 
 function bootInner(): void {
-  const claims = api.tokens.decodeToken(api.tokens.get()!);
-  const userId = claims?.user_id ?? "unknown";
-  requireEl("railUserId").textContent = userId;
-  requireEl("accountUserId").textContent = userId;
+// Seed IDs from JWT immediately so the UI isn't blank while the fetch runs
+const claims = api.tokens.decodeToken(api.tokens.get()!);
+const userId = claims?.user_id ?? "unknown";
+requireEl("railUserId").textContent = userId;
+requireEl("accountUserId").textContent = userId;
 
+// Then fill in username + avatar from the API
+void api.getMe().then((profile) => {
+  requireEl("railUserId").textContent = profile.user_id;
+  requireEl("railUsername").textContent = "@" + profile.username;
+  requireEl("accountUserId").textContent = profile.user_id;
+  requireEl("accountUsername").textContent = "@" + profile.username;
+
+  for (const id of ["railAvatar", "accountAvatar"]) {
+    const img = document.getElementById(id) as HTMLImageElement | null;
+    if (img) {
+      img.src = profile.profile_pic_url;
+      img.style.display = "block";
+    }
+  }
+}).catch(() => {
+  // JWT user_id fallback already displayed above — nothing more to do
+});
   // ---------- view switching ----------
   const views = document.querySelectorAll<HTMLElement>(".view");
   const navLinks = document.querySelectorAll<HTMLButtonElement>(".rail-link[data-view]");
