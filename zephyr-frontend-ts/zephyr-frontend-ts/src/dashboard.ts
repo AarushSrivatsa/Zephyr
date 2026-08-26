@@ -5,13 +5,13 @@ import type { RuleDto } from "./types.js";
 import { toast, escapeHtml, formatDate, requireEl } from "./ui.js";
 
 // =========================================================
-// dm_message normalization
+// dm_message / reply_message normalization
 // =========================================================
-// The backend is expected to return dm_message as a real JSON array
-// (string[]). In practice some rows can come back as a raw Postgres
-// array-literal string instead — e.g. "{hello}" for a single message,
-// or "{a,b,\"c,d\"}" for several. Left untouched, that string would get
-// treated as an array of individual characters. These helpers parse
+// The backend is expected to return dm_message / reply_message as a real
+// JSON array (string[] | null). In practice some rows can come back as a
+// raw Postgres array-literal string instead — e.g. "{hello}" for a single
+// message, or "{a,b,\"c,d\"}" for several. Left untouched, that string would
+// get treated as an array of individual characters. These helpers parse
 // that literal syntax properly so the UI always ends up with a clean
 // string[], regardless of which shape the API gave us.
 
@@ -47,7 +47,7 @@ function parsePgTextArray(raw: string): string[] {
   return result;
 }
 
-function normalizeDmMessages(raw: unknown): string[] {
+function normalizeMessageArray(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw as string[];
   if (typeof raw === "string") {
     const trimmed = raw.trim();
@@ -76,17 +76,11 @@ function boot(): void {
 }
 
 function bootInner(): void {
-// Seed IDs from JWT immediately so the UI isn't blank while the fetch runs
-const claims = api.tokens.decodeToken(api.tokens.get()!);
-const userId = claims?.user_id ?? "unknown";
-requireEl("railUserId").textContent = userId;
-requireEl("accountUserId").textContent = userId;
-
-// Then fill in username + avatar from the API
+// Username/avatar are filled in once the API responds. We deliberately
+// don't render user_id anywhere in the UI (it stays internal — JWT/API
+// only), so there's nothing to seed before the fetch resolves.
 void api.getMe().then((profile) => {
-  requireEl("railUserId").textContent = profile.user_id;
   requireEl("railUsername").textContent = "@" + profile.username;
-  requireEl("accountUserId").textContent = profile.user_id;
   requireEl("accountUsername").textContent = "@" + profile.username;
 
   for (const id of ["railAvatar", "accountAvatar"]) {
@@ -97,7 +91,7 @@ void api.getMe().then((profile) => {
     }
   }
 }).catch(() => {
-  // JWT user_id fallback already displayed above — nothing more to do
+  // Best-effort — leave the placeholder "—" if this fails.
 });
   // ---------- view switching ----------
   const views = document.querySelectorAll<HTMLElement>(".view");
@@ -147,27 +141,32 @@ void api.getMe().then((profile) => {
   confirmOverlay.addEventListener("click", (e) => { if (e.target === confirmOverlay) closeConfirm(false); });
 
   // =========================================================
-  // DM VARIANTS
+  // VARIANT LISTS (shared by DM messages + public reply messages)
   // =========================================================
-  function renderVariants(messages: unknown): void {
-    const container = requireEl("dmVariants");
+  // containerId: "dmVariants" | "replyVariants"
+  // DM variants are required (at least one non-empty row always visible).
+  // Reply variants are optional (can be empty — no rows is a valid state).
+
+  function renderVariants(containerId: string, messages: unknown): void {
+    const container = requireEl(containerId);
     container.innerHTML = "";
-    const list = normalizeDmMessages(messages);
-    const toRender = list.length ? list : [""];
-    toRender.forEach((msg) => addVariantRow(msg));
+    const list = normalizeMessageArray(messages);
+    const toRender = containerId === "dmVariants" && list.length === 0 ? [""] : list;
+    toRender.forEach((msg) => addVariantRow(containerId, msg));
   }
 
-  function addVariantRow(value = ""): void {
-    const container = requireEl("dmVariants");
+  function addVariantRow(containerId: string, value = ""): void {
+    const isDm = containerId === "dmVariants";
+    const container = requireEl(containerId);
     const row = document.createElement("div");
     row.style.cssText = "display:flex; gap:8px; align-items:flex-start;";
 
     const ta = document.createElement("textarea");
-    ta.className = "dm-variant-input";
-    ta.placeholder = "DM message…";
-    ta.required = true;
+    ta.className = isDm ? "dm-variant-input" : "reply-variant-input";
+    ta.placeholder = isDm ? "DM message…" : "Public reply…";
+    ta.required = isDm;
     ta.value = value;
-    ta.style.cssText = "flex:1; min-height:72px;";
+    ta.style.cssText = "flex:1; min-height:" + (isDm ? "72px" : "60px") + ";";
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
@@ -175,7 +174,8 @@ void api.getMe().then((profile) => {
     removeBtn.textContent = "✕";
     removeBtn.style.cssText = "margin-top:4px; flex:none;";
     removeBtn.addEventListener("click", () => {
-      if (container.querySelectorAll(".dm-variant-input").length <= 1) return;
+      // DM variants must always keep at least one row; reply variants can go to zero.
+      if (isDm && container.querySelectorAll(".dm-variant-input").length <= 1) return;
       row.remove();
     });
 
@@ -184,13 +184,14 @@ void api.getMe().then((profile) => {
     container.appendChild(row);
   }
 
-  function getVariants(): string[] {
-    return Array.from(document.querySelectorAll<HTMLTextAreaElement>(".dm-variant-input"))
+  function getVariants(containerId: string, className: string): string[] {
+    return Array.from(document.querySelectorAll<HTMLTextAreaElement>(`#${containerId} .${className}`))
       .map((ta) => ta.value.trim())
       .filter(Boolean);
   }
 
-  requireEl("addVariantBtn").addEventListener("click", () => addVariantRow());
+  requireEl("addVariantBtn").addEventListener("click", () => addVariantRow("dmVariants"));
+  requireEl("addReplyVariantBtn").addEventListener("click", () => addVariantRow("replyVariants"));
 
   // =========================================================
   // RULES
@@ -207,7 +208,8 @@ void api.getMe().then((profile) => {
   const subBannerText = requireEl("subBannerText");
 
   function ruleCardHtml(rule: RuleDto): string {
-    const dmMessages = normalizeDmMessages(rule.dm_message);
+    const dmMessages = normalizeMessageArray(rule.dm_message);
+    const replyMessages = normalizeMessageArray(rule.reply_message);
     const statusBadge = rule.is_active
       ? `<span class="badge">Active</span>`
       : `<span class="badge is-off">Paused</span>`;
@@ -215,6 +217,12 @@ void api.getMe().then((profile) => {
       (dmMessages.length > 1
         ? ` <span style="color:var(--ink-faint);font-size:12px;">+${dmMessages.length - 1} variant${dmMessages.length > 2 ? "s" : ""}</span>`
         : "");
+    const replyPreview = replyMessages.length
+      ? escapeHtml(replyMessages[0]) +
+        (replyMessages.length > 1
+          ? ` <span style="color:var(--ink-faint);font-size:12px;">+${replyMessages.length - 1} variant${replyMessages.length > 2 ? "s" : ""}</span>`
+          : "")
+      : "—";
     const caseSensitiveTag = rule.is_case_sensitive
       ? ` <span style="color:var(--ink-faint);font-size:12px;">Case sensitive</span>`
       : "";
@@ -234,7 +242,7 @@ void api.getMe().then((profile) => {
           </div>
           <div>
             <div class="lbl">Public reply</div>
-            <div class="txt">${rule.reply_message ? escapeHtml(rule.reply_message) : "—"}</div>
+            <div class="txt">${replyPreview}</div>
           </div>
         </div>
         <div class="rule-foot">
@@ -364,7 +372,8 @@ void api.getMe().then((profile) => {
   function openRuleModal(id: number | null): void {
     editingRuleId = id;
     ruleForm.reset();
-    renderVariants([""]);
+    renderVariants("dmVariants", [""]);
+    renderVariants("replyVariants", []);
     ruleActiveField.style.display = editingRuleId ? "block" : "none";
     ruleCaseSensitiveInput.checked = false;
     ruleCaseSensitiveLabel.textContent = "Off — matches any case";
@@ -376,8 +385,8 @@ void api.getMe().then((profile) => {
         .then((rule) => {
           requireEl<HTMLInputElement>("ruleLink").value = rule.link;
           requireEl<HTMLInputElement>("ruleCatchphrase").value = rule.catchphrase;
-          renderVariants(rule.dm_message);
-          requireEl<HTMLTextAreaElement>("ruleReply").value = rule.reply_message ?? "";
+          renderVariants("dmVariants", rule.dm_message);
+          renderVariants("replyVariants", rule.reply_message ?? []);
           ruleActiveInput.checked = rule.is_active;
           ruleActiveLabel.textContent = rule.is_active ? "Active" : "Paused";
           ruleCaseSensitiveInput.checked = rule.is_case_sensitive;
@@ -417,8 +426,8 @@ void api.getMe().then((profile) => {
     void (async () => {
       const link = requireEl<HTMLInputElement>("ruleLink").value.trim();
       const catchphrase = requireEl<HTMLInputElement>("ruleCatchphrase").value.trim();
-      const dmMessages = getVariants();
-      const replyMessage = requireEl<HTMLTextAreaElement>("ruleReply").value.trim();
+      const dmMessages = getVariants("dmVariants", "dm-variant-input");
+      const replyMessages = getVariants("replyVariants", "reply-variant-input");
 
       if (dmMessages.length === 0) {
         toast("Add at least one DM message.", "error");
@@ -432,7 +441,7 @@ void api.getMe().then((profile) => {
             link,
             catchphrase,
             dm_message: dmMessages,
-            reply_message: replyMessage || null,
+            reply_message: replyMessages.length ? replyMessages : null,
             is_active: ruleActiveInput.checked,
             is_case_sensitive: ruleCaseSensitiveInput.checked,
           });
@@ -442,7 +451,7 @@ void api.getMe().then((profile) => {
             link,
             catchphrase,
             dm_message: dmMessages,
-            reply_message: replyMessage || null,
+            reply_message: replyMessages.length ? replyMessages : null,
             is_case_sensitive: ruleCaseSensitiveInput.checked,
           });
           toast("Rule created.", "ok");

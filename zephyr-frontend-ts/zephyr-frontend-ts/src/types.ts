@@ -11,7 +11,7 @@ export interface RuleDto {
   link: string;
   catchphrase: string;
   dm_message: string[];
-  reply_message: string | null;
+  reply_message: string[] | null;
   is_active: boolean;
   is_case_sensitive: boolean;
   count: number;
@@ -22,7 +22,7 @@ export interface RuleCreateRequest {
   link: string;
   catchphrase: string;
   dm_message: string[];
-  reply_message: string | null;
+  reply_message: string[] | null;
   is_case_sensitive: boolean;
 }
 
@@ -30,7 +30,7 @@ export interface RuleUpdateRequest {
   link?: string;
   catchphrase?: string;
   dm_message?: string[];
-  reply_message?: string | null;
+  reply_message?: string[] | null;
   is_active?: boolean;
   is_case_sensitive?: boolean;
 }

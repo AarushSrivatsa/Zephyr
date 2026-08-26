@@ -605,7 +605,10 @@
                 <div class="field">
                     <label for="ruleReply">Public reply <span
                             style="text-transform:none; font-weight:400;">(optional)</span></label>
-                    <textarea id="ruleReply" placeholder="Sent! Check your DMs 📩"></textarea>
+                    <div id="replyVariants" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    <button type="button" class="btn btn-ghost btn-sm" id="addReplyVariantBtn" style="margin-top:6px;">+
+                        Add variant</button>
+                    <div class="field-hint">Zephyr picks one at random for the public reply, if any are set.</div>
                 </div>
                 <div class="field">
                     <label>DM message(s)</label>
