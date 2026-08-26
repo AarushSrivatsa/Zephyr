@@ -80,3 +80,7 @@ async def redirect_dashboard_html():
 @app.get("/callback", include_in_schema=False)
 async def serve_login_callback():
     return FileResponse(os.path.join(FRONTEND_DIR, "login-callback.html"))
+
+@app.get("/privacy-policy", include_in_schema=False)
+async def serve_privacy_policy():
+    return FileResponse(os.path.join(FRONTEND_DIR, "privacy-policy.html"))

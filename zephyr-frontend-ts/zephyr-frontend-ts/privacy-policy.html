@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy Policy — Zephyr</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  body{ display:flex; justify-content:center; padding: 60px 20px; }
+  .wrap{ width:100%; max-width:640px; }
+  .wordmark{
+    display:inline-flex; align-items:center; gap:10px;
+    font-family: var(--font-display); font-weight:700; font-size:22px;
+    text-decoration:none; color: var(--ink); margin-bottom: 30px;
+  }
+  h1{ font-size:24px; }
+  h2{ font-size:16px; margin-top:34px; color: var(--teal); }
+  p, li{ color: var(--ink-soft); font-size:14.5px; }
+  ul{ padding-left: 20px; }
+  li{ margin-bottom: 8px; }
+  .updated{ font-size:12.5px; color: var(--ink-faint); font-family: var(--font-mono); margin-bottom: 30px; }
+  a{ color: var(--teal); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="wordmark" href="index.html">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+        <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF2EE0" stroke-width="2" stroke-linecap="round"/>
+        <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#00F0FF" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Zephyr
+    </a>
+
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: August 26, 2026</p>
+
+    <p>Zephyr ("we", "our", "the app") is a comment-to-DM automation tool for Instagram professional accounts. This page explains what data we collect through your connected Instagram account, why we collect it, how long we keep it, and how you can delete it.</p>
+
+    <h2>What we collect</h2>
+    <ul>
+      <li><strong>Instagram profile info:</strong> your Instagram user ID, username, and profile picture URL, obtained when you connect your account via Instagram Login.</li>
+      <li><strong>Instagram access token:</strong> a long-lived access token, stored encrypted at rest, used solely to read comments on your posts, send the DMs and public replies you configure, and refresh itself before expiry.</li>
+      <li><strong>Rules you create:</strong> the post link, catchphrase, DM message variants, and optional public reply text you configure in the dashboard.</li>
+      <li><strong>Comment and DM activity logs:</strong> the Instagram comment ID and commenter ID for each comment that triggers a rule, used to avoid sending duplicate DMs for the same comment.</li>
+      <li><strong>Billing status:</strong> your subscription status and next billing date, managed through our payment processor, Dodo Payments. We do not receive or store your card details — Dodo handles payment collection directly.</li>
+      <li><strong>Session tokens:</strong> access and refresh tokens issued by Zephyr itself, used to keep you signed in to the dashboard.</li>
+    </ul>
+
+    <h2>How we use it</h2>
+    <p>We use this data exclusively to operate the core function of the app: detecting when someone comments a catchphrase you've configured on one of your posts, and automatically sending that commenter the DM message you wrote, with an optional public reply. We do not sell, rent, or share your data with advertisers, and we do not use your Instagram data to train any AI or machine learning model.</p>
+
+    <h2>Who we share data with</h2>
+    <ul>
+      <li><strong>Meta / Instagram:</strong> to send DMs and replies on your behalf, via the Instagram Graph API, using the permissions you granted when connecting your account.</li>
+      <li><strong>Dodo Payments:</strong> our payment processor, to handle subscription billing.</li>
+      <li><strong>Our hosting and database providers</strong> (Render and Neon), who store the data described above on our behalf and do not use it for any purpose of their own.</li>
+    </ul>
+
+    <h2>Data retention and deletion</h2>
+    <p>You can disconnect your account and delete your data at any time from the <a href="dashboard.html?view=account">Account tab</a> of your dashboard, using the <strong>Disconnect &amp; delete my data</strong> button. Doing so immediately:</p>
+    <ul>
+      <li>Revokes Zephyr's access to your Instagram account and unsubscribes from webhooks</li>
+      <li>Signs you out of all sessions and deletes your session tokens</li>
+      <li>Removes your stored Instagram access token</li>
+    </ul>
+    <p>Your account and associated rules, comment logs, and profile info are then permanently deleted from our database within <strong>30 days</strong>. Full step-by-step instructions are also available on our <a href="data-deletion.html">Data Deletion Instructions</a> page.</p>
+
+    <h2>Your rights</h2>
+    <p>You can request access to, correction of, or deletion of your data at any time by contacting us using the email below, in addition to using the self-serve deletion option described above.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If we make material changes to this policy, we'll update the date at the top of this page. Continued use of Zephyr after changes take effect constitutes acceptance of the updated policy.</p>
+
+    <h2>Contact</h2>
+    <p>Questions about this policy or your data can be sent to <a href="mailto:support@zephyr-m5w7.onrender.com">support@zephyr-m5w7.onrender.com</a>.</p>
+  </div>
+</body>
+</html>
