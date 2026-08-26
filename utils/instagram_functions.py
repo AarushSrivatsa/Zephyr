@@ -52,7 +52,9 @@ async def process_webhook(data: dict, db: AsyncSession):
             print('Ignoring non-instagram webhook')
             return
 
-        # Step 1: collect all comments from payload
+        # Step 1: collect all comments from payload.
+        # comment_text keeps its ORIGINAL case — we lower() it wherever
+        # needed instead of storing a second lowercased copy.
         comments = []
         for entry in data.get('entry', []):
             for change in entry.get('changes', []):
@@ -60,7 +62,7 @@ async def process_webhook(data: dict, db: AsyncSession):
                 if change.get('field') != 'comments':
                     continue
                 value = change.get('value', {})
-                comment_text = value.get('text', '').strip().lower()
+                comment_text = value.get('text', '').strip()
                 media_id = value.get('media', {}).get('id')
                 comment_id = value.get('id')
                 commenter_id = value.get('from', {}).get('id')
@@ -114,15 +116,24 @@ async def process_webhook(data: dict, db: AsyncSession):
         )
         rules = rules_result.scalars().all()
         print(f'Rules found: {len(rules)}')
+
+        # Always key on the lowercased catchphrase — a single canonical
+        # lookup regardless of a rule's case-sensitivity setting.
         rule_map = {(r.media_id, r.catchphrase.lower()): r for r in rules}
         print(f'Rule map keys: {list(rule_map.keys())}')
 
         # Step 5: process each comment
         for comment_text, media_id, comment_id, commenter_id in comments:
             print(f'Looking up rule for media_id={media_id}, comment_text={comment_text}')
-            rule = rule_map.get((media_id, comment_text))
+            rule = rule_map.get((media_id, comment_text.lower()))
             if not rule:
                 print(f'No rule found for: media_id={media_id}, text={comment_text}')
+                continue
+
+            # Case-sensitive rules need an exact match against the
+            # original-case comment text and stored catchphrase.
+            if rule.is_case_sensitive and comment_text != rule.catchphrase:
+                print(f'Case-sensitive mismatch: got "{comment_text}", expected "{rule.catchphrase}"')
                 continue
 
             if not rule.user.encrypted_instagram_access_token:

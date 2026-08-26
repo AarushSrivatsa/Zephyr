@@ -208,6 +208,9 @@ function bootInner(): void {
       (dmMessages.length > 1
         ? ` <span style="color:var(--ink-faint);font-size:12px;">+${dmMessages.length - 1} variant${dmMessages.length > 2 ? "s" : ""}</span>`
         : "");
+    const caseSensitiveTag = rule.is_case_sensitive
+      ? ` <span style="color:var(--ink-faint);font-size:12px;">Case sensitive</span>`
+      : "";
     return `
       <div class="card rule-card" data-id="${rule.id}">
       <div class="rule-top">
@@ -231,6 +234,7 @@ function bootInner(): void {
           <div class="rule-stats">
             <span><span class="num">${rule.count}</span> sent</span>
             <span>Since ${formatDate(rule.created_at)}</span>
+            ${caseSensitiveTag}
           </div>
           <div class="rule-actions">
             <label class="rule-toggle">
@@ -339,14 +343,24 @@ function bootInner(): void {
   const ruleActiveField = requireEl("ruleActiveField");
   const ruleActiveInput = requireEl<HTMLInputElement>("ruleActive");
   const ruleActiveLabel = requireEl("ruleActiveLabel");
+  const ruleCaseSensitiveInput = requireEl<HTMLInputElement>("ruleCaseSensitive");
+  const ruleCaseSensitiveLabel = requireEl("ruleCaseSensitiveLabel");
   const ruleSubmitBtn = requireEl<HTMLButtonElement>("ruleSubmitBtn");
   let editingRuleId: number | null = null;
+
+  ruleCaseSensitiveInput.addEventListener("change", () => {
+    ruleCaseSensitiveLabel.textContent = ruleCaseSensitiveInput.checked
+      ? "On — exact case match only"
+      : "Off — matches any case";
+  });
 
   function openRuleModal(id: number | null): void {
     editingRuleId = id;
     ruleForm.reset();
     renderVariants([""]);
     ruleActiveField.style.display = editingRuleId ? "block" : "none";
+    ruleCaseSensitiveInput.checked = false;
+    ruleCaseSensitiveLabel.textContent = "Off — matches any case";
 
     if (editingRuleId) {
       ruleModalTitle.textContent = "Edit rule";
@@ -359,6 +373,10 @@ function bootInner(): void {
           requireEl<HTMLTextAreaElement>("ruleReply").value = rule.reply_message ?? "";
           ruleActiveInput.checked = rule.is_active;
           ruleActiveLabel.textContent = rule.is_active ? "Active" : "Paused";
+          ruleCaseSensitiveInput.checked = rule.is_case_sensitive;
+          ruleCaseSensitiveLabel.textContent = rule.is_case_sensitive
+            ? "On — exact case match only"
+            : "Off — matches any case";
         })
         .catch((e: unknown) => {
           toast(errorMessage(e, "Couldn't load that rule."), "error");
@@ -409,6 +427,7 @@ function bootInner(): void {
             dm_message: dmMessages,
             reply_message: replyMessage || null,
             is_active: ruleActiveInput.checked,
+            is_case_sensitive: ruleCaseSensitiveInput.checked,
           });
           toast("Rule updated.", "ok");
         } else {
@@ -417,6 +436,7 @@ function bootInner(): void {
             catchphrase,
             dm_message: dmMessages,
             reply_message: replyMessage || null,
+            is_case_sensitive: ruleCaseSensitiveInput.checked,
           });
           toast("Rule created.", "ok");
         }

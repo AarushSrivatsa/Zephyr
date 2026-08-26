@@ -47,6 +47,7 @@ class RuleModel(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     count: Mapped[int] = mapped_column(Integer, server_default='0')
+    is_case_sensitive: Mapped[bool] = mapped_column(Boolean, default=False)
 
     user_id: Mapped[str] = mapped_column(String(50), ForeignKey('users.user_id', ondelete='CASCADE'), index=True)
 

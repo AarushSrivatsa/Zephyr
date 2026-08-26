@@ -568,6 +568,16 @@
                     <div class="field-hint">Comments matching this text (case-insensitive) trigger the DM.</div>
                 </div>
                 <div class="field">
+                    <label style="margin-bottom:0;">Case sensitive</label>
+                    <div class="rule-toggle" style="margin-top:8px;">
+                        <span class="switch"><input type="checkbox" id="ruleCaseSensitive" /><span
+                                class="track"></span></span>
+                        <span id="ruleCaseSensitiveLabel">Off — matches any case</span>
+                    </div>
+                    <div class="field-hint">On: "GUIDE" only matches "GUIDE". Off: matches "guide", "Guide", "GUIDE".
+                    </div>
+                </div>
+                <div class="field">
                     <label for="ruleReply">Public reply <span
                             style="text-transform:none; font-weight:400;">(optional)</span></label>
                     <textarea id="ruleReply" placeholder="Sent! Check your DMs 📩"></textarea>

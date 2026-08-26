@@ -16,11 +16,18 @@ class RuleCreate(BaseModel):
     catchphrase: str
     dm_message: list[str]
     reply_message: str | None = None
+    is_case_sensitive: bool = False
+
+    @field_validator('catchphrase')
+    @classmethod
+    def normalize_catchphrase(cls, v: str) -> str:
+        # NOTE: no .lower() here — original case must be preserved so
+        # case-sensitive rules have something meaningful to compare against.
+        return v.strip()
 
     @field_validator('dm_message', mode='before')
     @classmethod
     def coerce_dm_message(cls, v):
-        # guards against a bare string being iterated char-by-char by list[str]
         if isinstance(v, str):
             return [v]
         return v
@@ -40,6 +47,7 @@ class RuleResponse(BaseModel):
     dm_message: list[str]
     reply_message: str | None
     is_active: bool
+    is_case_sensitive: bool
     count: int
     created_at: datetime
 
@@ -57,6 +65,7 @@ async def create_rule(rule: RuleCreate, db: AsyncSession = Depends(get_db), user
         catchphrase=rule.catchphrase,
         dm_message=rule.dm_message,
         reply_message=rule.reply_message,
+        is_case_sensitive=rule.is_case_sensitive,
         user_id=user.user_id
     )
 
@@ -93,12 +102,13 @@ class RuleUpdate(BaseModel):
     dm_message: list[str] | None = None
     reply_message: str | None = None
     is_active: bool | None = None
+    is_case_sensitive: bool | None = None
 
     @field_validator('catchphrase')
     @classmethod
     def normalize_catchphrase(cls, v: str | None) -> str | None:
         if v is not None:
-            return v.strip().lower()
+            return v.strip()
         return v
 
     @field_validator('dm_message', mode='before')
@@ -137,14 +147,12 @@ async def update_rule(rule_id: int, rule_update: RuleUpdate, db: AsyncSession = 
     for field, value in update_data.items():
         setattr(rule, field, value)
 
-    
     try:
         await db.flush()
     except IntegrityError:
         raise HTTPException(status_code=409, detail='A rule with this catchphrase already exists for that post')
-    
-    await db.refresh(rule)
 
+    await db.refresh(rule)
     return rule
 
 @router.delete('/{rule_id}')

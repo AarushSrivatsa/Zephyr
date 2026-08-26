@@ -13,6 +13,7 @@ export interface RuleDto {
   dm_message: string[];
   reply_message: string | null;
   is_active: boolean;
+  is_case_sensitive: boolean;
   count: number;
   created_at: string;
 }
@@ -22,6 +23,7 @@ export interface RuleCreateRequest {
   catchphrase: string;
   dm_message: string[];
   reply_message: string | null;
+  is_case_sensitive: boolean;
 }
 
 export interface RuleUpdateRequest {
@@ -30,6 +32,7 @@ export interface RuleUpdateRequest {
   dm_message?: string[];
   reply_message?: string | null;
   is_active?: boolean;
+  is_case_sensitive?: boolean;
 }
 
 export interface JwtClaims {
