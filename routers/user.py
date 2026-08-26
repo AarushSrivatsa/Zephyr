@@ -13,6 +13,7 @@ from settings import REFRESH_TOKEN_EXPIRE_DAYS
 from sqlalchemy import delete
 from fastapi import status
 from fastapi.exceptions import HTTPException
+from pydantic import BaseModel
 from utils.token_handling import get_current_user, get_current_user_any
 
 router = APIRouter(prefix='/user', tags=['User'])
@@ -177,6 +178,21 @@ async def logout(refresh_token: str, db: AsyncSession = Depends(get_db), user: U
         RefreshTokenModel.user_id == user.user_id
     ))
     return {'message': 'Logged out successfully'}
+
+class UserProfileResponse(BaseModel):
+    user_id: str
+    username: str
+    profile_pic_url: str
+
+    class Config:
+        from_attributes = True
+
+@router.get('/me', response_model=UserProfileResponse)
+async def get_me(user: UserModel = Depends(get_current_user_any)):
+    # Deliberately uses get_current_user_any (not get_current_user) — profile
+    # info should be visible even if the subscription has lapsed, since the
+    # rail/account UI needs it regardless of billing state.
+    return user
 
 @router.delete('/me')
 async def delete_account(db: AsyncSession = Depends(get_db), user: UserModel = Depends(get_current_user_any)):
