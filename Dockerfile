@@ -24,7 +24,7 @@ COPY zephyr-frontend-ts/zephyr-frontend-ts/index.html frontend/
 COPY zephyr-frontend-ts/zephyr-frontend-ts/dashboard.html frontend/
 COPY zephyr-frontend-ts/zephyr-frontend-ts/login-callback.html frontend/
 COPY zephyr-frontend-ts/zephyr-frontend-ts/privacy-policy.html frontend/
-COPY zephyr-frontend-ts/zephyr-frontend-ats/data-deletion.html frontend/
+COPY zephyr-frontend-ts/zephyr-frontend-ts/data-deletion.html frontend/
 COPY zephyr-frontend-ts/zephyr-frontend-ts/css/ frontend/css/
 COPY --from=frontend-build /frontend/js/ frontend/js/
 
