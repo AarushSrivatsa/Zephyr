@@ -92,6 +92,14 @@ function bootInner(): void {
   }
   navLinks.forEach((l) => l.addEventListener("click", () => showView(l.dataset.view!)));
 
+  // Deep-link support: /dashboard?view=account jumps straight to a tab.
+  // Used for the Meta Data Deletion Instructions URL, so people land
+  // directly on the disconnect/delete option instead of the Rules view.
+  const requestedView = new URLSearchParams(window.location.search).get("view");
+  if (requestedView && ["rules", "billing", "account"].includes(requestedView)) {
+    showView(requestedView);
+  }
+
   // ---------- sign out ----------
   async function doLogout(): Promise<void> {
     await api.logout();
