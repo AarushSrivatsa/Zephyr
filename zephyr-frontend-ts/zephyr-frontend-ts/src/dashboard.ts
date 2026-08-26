@@ -128,25 +128,6 @@ function bootInner(): void {
   requireEl("confirmClose").addEventListener("click", () => closeConfirm(false));
   confirmOverlay.addEventListener("click", (e) => { if (e.target === confirmOverlay) closeConfirm(false); });
 
-  // ---------- account deletion ----------
-  requireEl("deleteAccountBtn").addEventListener("click", () => {
-    void (async () => {
-      const ok = await askConfirm(
-        "Disconnect Instagram?",
-        "This deletes your rules and logs and signs you out everywhere. This can't be undone."
-      );
-      if (!ok) return;
-      try {
-        await api.deleteAccount();
-        api.tokens.clear();
-        toast("Account disconnected.", "ok");
-        window.location.href = "index.html";
-      } catch (e) {
-        toast(errorMessage(e, "Couldn't delete your account."), "error");
-      }
-    })();
-  });
-
   // =========================================================
   // DM VARIANTS
   // =========================================================

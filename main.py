@@ -84,3 +84,15 @@ async def serve_login_callback():
 @app.get("/privacy-policy", include_in_schema=False)
 async def serve_privacy_policy():
     return FileResponse(os.path.join(FRONTEND_DIR, "privacy-policy.html"))
+
+@app.get("/privacy-policy.html", include_in_schema=False)
+async def redirect_privacy_policy_html():
+    return RedirectResponse(url="/privacy-policy", status_code=307)
+
+@app.get("/data-deletion", include_in_schema=False)
+async def serve_data_deletion():
+    return FileResponse(os.path.join(FRONTEND_DIR, "data-deletion.html"))
+
+@app.get("/data-deletion.html", include_in_schema=False)
+async def redirect_data_deletion_html():
+    return RedirectResponse(url="/data-deletion", status_code=307)

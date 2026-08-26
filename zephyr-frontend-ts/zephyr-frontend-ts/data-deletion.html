@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Delete Your Data — Zephyr</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  body{ display:flex; justify-content:center; padding: 60px 20px; }
+  .wrap{ width:100%; max-width:560px; }
+  .wordmark{
+    display:inline-flex; align-items:center; gap:10px;
+    font-family: var(--font-display); font-weight:700; font-size:22px;
+    text-decoration:none; color: var(--ink); margin-bottom: 30px;
+  }
+  h1{ font-size:22px; }
+  h2{ font-size:15px; margin-bottom:10px; }
+  .card{ padding: 26px 28px; margin-top: 24px; }
+  .status-line{ font-size: 13.5px; margin-top: 14px; min-height: 1.2em; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="wordmark" href="/">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+        <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF2EE0" stroke-width="2" stroke-linecap="round"/>
+        <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#00F0FF" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Zephyr
+    </a>
+
+    <h1>Delete your data</h1>
+    <p>Zephyr only stores data tied to your connected Instagram account — your rules, DM logs, and account info. Disconnecting deletes it permanently.</p>
+
+    <div class="card">
+      <h2>What happens when you delete your account</h2>
+      <ul style="color:var(--ink-soft); font-size:13.5px; padding-left:18px; margin:0;">
+        <li style="margin-bottom:8px;">Zephyr immediately unsubscribes from your Instagram account's webhooks — no more comments are read or DMs sent.</li>
+        <li style="margin-bottom:8px;">All of your active sessions are signed out and your session tokens are deleted right away.</li>
+        <li style="margin-bottom:8px;">Your stored Instagram access token is removed immediately.</li>
+        <li>Your account record, rules, and comment/DM logs are then <strong>permanently deleted from our database within 30 days</strong>.</li>
+      </ul>
+    </div>
+
+    <!-- Signed out: prompt to sign in first -->
+    <div id="signedOutState" class="card" style="display:none; text-align:center;">
+      <h2>Sign in to continue</h2>
+      <p>You need to be signed in to delete your account.</p>
+      <a class="btn btn-accent" href="/dashboard">Sign in</a>
+    </div>
+
+    <!-- Signed in: the actual delete flow -->
+    <div id="signedInState" class="card" style="display:none;">
+      <h2>Delete account</h2>
+      <p class="mono" style="font-size:12.5px; color:var(--ink-faint);">Signed in as <span id="accountUserIdDisplay">—</span></p>
+
+      <div id="confirmStep1">
+        <button class="btn btn-danger btn-block" id="initDeleteBtn" style="margin-top:10px;">
+          Disconnect &amp; delete my data
+        </button>
+      </div>
+
+      <div id="confirmStep2" style="display:none; margin-top:10px;">
+        <p style="color:var(--danger); font-size:13.5px;">
+          This can't be undone. Your Instagram connection, rules, and logs will be removed immediately, and permanently
+          deleted from our systems within 30 days.
+        </p>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-ghost" id="cancelDeleteBtn" style="flex:1;">Cancel</button>
+          <button class="btn btn-danger" id="confirmDeleteBtn" style="flex:1;">Yes, delete everything</button>
+        </div>
+      </div>
+
+      <p id="deleteStatus" class="status-line"></p>
+    </div>
+
+    <p style="margin-top:24px; font-size:13.5px; color:var(--ink-soft);">
+      If you no longer have access to sign in, you can also revoke Zephyr's access directly from Instagram:
+      Instagram app → Settings → <strong>Apps and Websites</strong> → find <strong>Zephyr</strong> → <strong>Remove</strong>.
+      This immediately cuts off Zephyr's access to your account; associated data is still deleted from our systems within 30 days.
+    </p>
+
+    <p style="margin-top:20px; font-size:13.5px; color:var(--ink-soft);">
+      Questions about your data? Contact us at <a href="mailto:support@zephyr-m5w7.onrender.com" style="color:var(--teal);">support@zephyr-m5w7.onrender.com</a>.
+    </p>
+  </div>
+
+  <script type="module" src="js/delete-account.js"></script>
+</body>
+</html>
