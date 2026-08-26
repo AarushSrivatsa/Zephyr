@@ -79,10 +79,14 @@ async def dodo_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         if not next_billing_date:
             print(f"No next_billing_date in payload for event {event_type}")
             return {'status': 'ignored'}
+        try:
+            next_billing_date = datetime.fromisoformat(next_billing_date.replace('Z', '+00:00'))
+        except (ValueError, AttributeError) as e:
+            print(f"Bad next_billing_date format: {next_billing_date} ({e})")
+            raise HTTPException(status_code=400, detail='Invalid next_billing_date')
         await db.execute(
             update(SubscriptionModel)
             .where(SubscriptionModel.user_id == user_id)
             .values(next_billing_date=next_billing_date)
         )
-
     return {'status': 'ok'}
