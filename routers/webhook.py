@@ -29,16 +29,25 @@ async def receive_webhook(
     db: AsyncSession = Depends(get_db)
 ):
     body = await request.body()
+    print(f'Webhook received — headers: {dict(request.headers)}')
+    print(f'Webhook body: {body.decode()}')
 
     sig_header = request.headers.get('X-Hub-Signature-256', '')
     expected = 'sha256=' + hmac.new(CLIENT_SECRET.encode(), body, hashlib.sha256).hexdigest()
+    print(f'Signature header: {sig_header}')
+    print(f'Expected signature: {expected}')
+
     if not hmac.compare_digest(sig_header, expected):
+        print('Signature mismatch — rejecting webhook')
         raise HTTPException(status_code=403, detail='Invalid signature')
 
     data = json.loads(body)
+    print(f'Webhook object type: {data.get("object")}')
 
     if data.get('object') != 'instagram':
+        print('Ignoring non-instagram webhook')
         return {'status': 'ignored'}
 
+    print('Queuing webhook for background processing')
     background_tasks.add_task(process_webhook, data, db)
     return {'status': 'ok'}
