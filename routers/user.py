@@ -59,7 +59,7 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
     # Step 2: Exchange for long-lived token
     long_lived_response = await client.post(
         'https://graph.instagram.com/access_token',
-        params={
+        data={
             'grant_type': 'ig_exchange_token',
             'client_secret': CLIENT_SECRET,
             'access_token': short_lived_token
@@ -78,7 +78,7 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
     # Step 3: Fetch user info
     user_response = await client.get(
         'https://graph.instagram.com/v25.0/me',
-        params={
+        data={
             'fields': 'user_id,username,profile_picture_url',
             'access_token': long_lived_token
         }
