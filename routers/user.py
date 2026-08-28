@@ -78,7 +78,7 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
     # Step 3: Fetch user info
     user_response = await client.get(
         'https://graph.instagram.com/v25.0/me',
-        data={
+        params={
             'fields': 'user_id,username,profile_picture_url',
             'access_token': long_lived_token
         }
