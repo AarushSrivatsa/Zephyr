@@ -7,16 +7,8 @@ import { toast, escapeHtml, formatDate, requireEl } from "./ui.js";
 // =========================================================
 // dm_message / reply_message normalization
 // =========================================================
-// The backend is expected to return dm_message / reply_message as a real
-// JSON array (string[] | null). In practice some rows can come back as a
-// raw Postgres array-literal string instead — e.g. "{hello}" for a single
-// message, or "{a,b,\"c,d\"}" for several. Left untouched, that string would
-// get treated as an array of individual characters. These helpers parse
-// that literal syntax properly so the UI always ends up with a clean
-// string[], regardless of which shape the API gave us.
-
 function parsePgTextArray(raw: string): string[] {
-  const inner = raw.slice(1, -1); // strip leading "{" and trailing "}"
+  const inner = raw.slice(1, -1);
   if (inner === "") return [];
 
   const result: string[] = [];
@@ -76,23 +68,21 @@ function boot(): void {
 }
 
 function bootInner(): void {
-// Username/avatar are filled in once the API responds. We deliberately
-// don't render user_id anywhere in the UI (it stays internal — JWT/API
-// only), so there's nothing to seed before the fetch resolves.
-void api.getMe().then((profile) => {
-  requireEl("railUsername").textContent = "@" + profile.username;
-  requireEl("accountUsername").textContent = "@" + profile.username;
+  void api.getMe().then((profile) => {
+    requireEl("railUsername").textContent = "@" + profile.username;
+    requireEl("accountUsername").textContent = "@" + profile.username;
 
-  for (const id of ["railAvatar", "accountAvatar"]) {
-    const img = document.getElementById(id) as HTMLImageElement | null;
-    if (img) {
-      img.src = profile.profile_pic_url;
-      img.style.display = "block";
+    for (const id of ["railAvatar", "accountAvatar"]) {
+      const img = document.getElementById(id) as HTMLImageElement | null;
+      if (img) {
+        img.src = profile.profile_pic_url;
+        img.style.display = "block";
+      }
     }
-  }
-}).catch(() => {
-  // Best-effort — leave the placeholder "—" if this fails.
-});
+  }).catch(() => {
+    // leave placeholder "—" if fetch fails
+  });
+
   // ---------- view switching ----------
   const views = document.querySelectorAll<HTMLElement>(".view");
   const navLinks = document.querySelectorAll<HTMLButtonElement>(".rail-link[data-view]");
@@ -104,9 +94,6 @@ void api.getMe().then((profile) => {
   }
   navLinks.forEach((l) => l.addEventListener("click", () => showView(l.dataset.view!)));
 
-  // Deep-link support: /dashboard?view=account jumps straight to a tab.
-  // Used for the Meta Data Deletion Instructions URL, so people land
-  // directly on the disconnect/delete option instead of the Rules view.
   const requestedView = new URLSearchParams(window.location.search).get("view");
   if (requestedView && ["rules", "billing", "account"].includes(requestedView)) {
     showView(requestedView);
@@ -141,12 +128,8 @@ void api.getMe().then((profile) => {
   confirmOverlay.addEventListener("click", (e) => { if (e.target === confirmOverlay) closeConfirm(false); });
 
   // =========================================================
-  // VARIANT LISTS (shared by DM messages + public reply messages)
+  // VARIANT LISTS
   // =========================================================
-  // containerId: "dmVariants" | "replyVariants"
-  // DM variants are required (at least one non-empty row always visible).
-  // Reply variants are optional (can be empty — no rows is a valid state).
-
   function renderVariants(containerId: string, messages: unknown): void {
     const container = requireEl(containerId);
     container.innerHTML = "";
@@ -174,7 +157,6 @@ void api.getMe().then((profile) => {
     removeBtn.textContent = "✕";
     removeBtn.style.cssText = "margin-top:4px; flex:none;";
     removeBtn.addEventListener("click", () => {
-      // DM variants must always keep at least one row; reply variants can go to zero.
       if (isDm && container.querySelectorAll(".dm-variant-input").length <= 1) return;
       row.remove();
     });
