@@ -1,10 +1,642 @@
-<div class="card account-card">
-  <h3 style="font-size:16px;">Signed in as</h3>
-  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px;">
-    <img id="accountAvatar"
-         style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;display:none;"
-         alt="" />
-    <div style="font-weight:600;font-size:15px;text-align:center;" id="accountUsername">—</div>
-  </div>
-  <button class="btn btn-outline" id="accountLogoutBtn">Sign out of this device</button>
-</div>
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard — Zephyr</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .app {
+            display: grid;
+            grid-template-columns: 232px 1fr;
+            min-height: 100vh;
+        }
+
+        .rail {
+            background: var(--surface);
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            padding: 22px 16px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .rail .wordmark {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 18px;
+            text-decoration: none;
+            color: var(--ink);
+            padding: 6px 8px 22px;
+        }
+
+        .rail-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+        }
+
+        .rail-link {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 14.5px;
+            font-weight: 500;
+            color: var(--ink-soft);
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            background: none;
+            text-align: left;
+            width: 100%;
+            font-family: var(--font-body);
+        }
+
+        .rail-link:hover {
+            background: var(--bg-dim);
+            color: var(--ink);
+        }
+
+        .rail-link.is-active {
+            background: var(--teal-soft);
+            color: var(--teal-deep);
+            font-weight: 600;
+        }
+
+        .rail-link .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: .55;
+            flex: none;
+        }
+
+        .rail-foot {
+            border-top: 1px solid var(--line);
+            padding-top: 14px;
+            margin-top: 10px;
+        }
+
+        .main {
+            padding: 40px 44px 80px;
+            max-width: 980px;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.is-active {
+            display: block;
+        }
+
+        .page-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 28px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .page-head h1 {
+            font-size: 26px;
+            margin-bottom: 4px;
+        }
+
+        .page-head p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            background: var(--accent-soft);
+            border: 1px solid rgba(178, 61, 34, 0.18);
+            margin-bottom: 26px;
+        }
+
+        .banner p {
+            margin: 0;
+            color: var(--accent-deep);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .rules-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .rule-card {
+            padding: 20px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .rule-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .rule-catch {
+            font-family: var(--font-mono);
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        .rule-link {
+            font-size: 12.5px;
+            color: var(--ink-faint);
+            word-break: break-all;
+        }
+
+        .rule-link a {
+            color: var(--teal);
+            text-decoration: none;
+        }
+
+        .rule-link a:hover {
+            text-decoration: underline;
+        }
+
+        .rule-msgs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            font-size: 13.5px;
+        }
+
+        .rule-msgs .lbl {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--ink-faint);
+            margin-bottom: 4px;
+        }
+
+        .rule-msgs .txt {
+            color: var(--ink-soft);
+        }
+
+        .rule-foot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px dashed var(--line);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .rule-stats {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--ink-soft);
+        }
+
+        .rule-stats .num {
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        .rule-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rule-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+            color: var(--ink-soft);
+            cursor: pointer;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 70px 20px;
+        }
+
+        .empty-state .glyph {
+            font-size: 34px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state h3 {
+            font-size: 17px;
+            margin-bottom: 6px;
+        }
+
+        .empty-state p {
+            max-width: 360px;
+            margin: 0 auto 20px;
+        }
+
+        .pager {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 26px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--ink-soft);
+        }
+
+        .loading-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 40px 0;
+            justify-content: center;
+            color: var(--ink-faint);
+            font-size: 14px;
+        }
+
+        /* billing */
+        .billing-card {
+            padding: 30px 32px;
+            max-width: 480px;
+        }
+
+        .billing-card h3 {
+            font-size: 18px;
+        }
+
+        .billing-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px dashed var(--line);
+            font-size: 14px;
+        }
+
+        .billing-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .billing-row .k {
+            color: var(--ink-faint);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        /* account */
+        .account-card {
+            padding: 30px 32px;
+            max-width: 480px;
+            margin-bottom: 20px;
+        }
+
+        .danger-zone {
+            border-color: rgba(178, 61, 34, 0.25);
+        }
+
+        .danger-zone h3 {
+            color: var(--accent-deep);
+        }
+
+        /* modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(25, 31, 27, 0.45);
+            backdrop-filter: blur(2px);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 6vh 20px;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .15s ease;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.is-open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-pop);
+            width: 100%;
+            max-width: 520px;
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 30px 30px 26px;
+            transform: translateY(-8px);
+            transition: transform .15s ease;
+        }
+
+        .modal-overlay.is-open .modal {
+            transform: translateY(0);
+        }
+
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-head h2 {
+            font-size: 19px;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--ink-faint);
+            line-height: 1;
+            padding: 4px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        @media (max-width: 760px) {
+            .app {
+                grid-template-columns: 1fr;
+            }
+
+            .rail {
+                position: static;
+                height: auto;
+                flex-direction: row;
+                align-items: center;
+                padding: 14px 16px;
+            }
+
+            .rail .wordmark {
+                padding: 0;
+            }
+
+            .rail-nav {
+                flex-direction: row;
+            }
+
+            .rail-foot {
+                display: none;
+            }
+
+            .main {
+                padding: 26px 18px 60px;
+            }
+
+            .rule-msgs {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="authGate" class="card"
+        style="max-width:420px; margin:14vh auto; padding:32px; text-align:center; display:none;">
+        <h1 style="font-size:19px;">Sign in required</h1>
+        <p>Connect your Instagram account to view your dashboard.</p>
+        <a class="btn btn-accent" href="index.html">Back to Zephyr</a>
+    </div>
+
+    <div class="app" id="app" style="display:none;">
+        <aside class="rail">
+            <a class="wordmark" href="index.html">
+                <svg width="24" height="24" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+                    <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF5A36"
+                        stroke-width="2" stroke-linecap="round" />
+                    <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#1F5E5B"
+                        stroke-width="2" stroke-linecap="round" />
+                </svg>
+                Zephyr
+            </a>
+            <nav class="rail-nav">
+                <button class="rail-link is-active" data-view="rules"><span class="dot"></span>Rules</button>
+                <button class="rail-link" data-view="billing"><span class="dot"></span>Billing</button>
+                <button class="rail-link" data-view="account"><span class="dot"></span>Account</button>
+            </nav>
+            <div class="rail-foot">
+                <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:0 12px 10px;">
+                    <img id="railAvatar"
+                        style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex:none;display:none;"
+                        alt="" />
+                    <div style="font-size:13px;font-weight:600;color:var(--ink);" id="railUsername">—</div>
+                </div>
+                <button class="rail-link" id="logoutBtn"><span class="dot"></span>Sign out</button>
+            </div>
+        </aside>
+
+        <main class="main">
+
+            <!-- RULES VIEW -->
+            <section class="view is-active" id="view-rules">
+                <div class="page-head">
+                    <div>
+                        <h1>Rules</h1>
+                        <p>Every catchphrase you're watching for, across your posts.</p>
+                    </div>
+                    <button class="btn btn-accent" id="newRuleBtn">+ New rule</button>
+                </div>
+
+                <div class="banner" id="subBanner" style="display:none;">
+                    <p id="subBannerText">Your trial has ended. Start a subscription to keep rules running.</p>
+                    <button class="btn btn-teal btn-sm" id="subBannerBtn">Manage billing</button>
+                </div>
+
+                <div id="rulesLoading" class="loading-row"><span class="spinner"></span> Loading your rules…</div>
+                <div id="rulesList" class="rules-list" style="display:none;"></div>
+                <div id="rulesEmpty" class="empty-state card" style="display:none;">
+                    <div class="glyph">🪁</div>
+                    <h3>No rules yet</h3>
+                    <p>Create your first rule to start turning comments into DMs.</p>
+                    <button class="btn btn-accent" id="emptyNewRuleBtn">+ New rule</button>
+                </div>
+                <div class="pager" id="pager" style="display:none;">
+                    <button class="btn btn-ghost btn-sm" id="prevPageBtn">← Prev</button>
+                    <span id="pageLabel">Page 1</span>
+                    <button class="btn btn-ghost btn-sm" id="nextPageBtn">Next →</button>
+                </div>
+            </section>
+
+            <!-- BILLING VIEW -->
+            <section class="view" id="view-billing">
+                <div class="page-head">
+                    <div>
+                        <h1>Billing</h1>
+                        <p>Zephyr is $1/week, billed by Dodo Payments.</p>
+                    </div>
+                </div>
+                <div class="card billing-card">
+                    <h3>Subscription</h3>
+                    <div class="billing-row"><span class="k">Plan</span><span>Zephyr — $1/week</span></div>
+                    <div class="billing-row"><span class="k">Status</span><span id="billingStatus">Checking…</span>
+                    </div>
+                    <p style="margin-top:18px; font-size:13px;">New connections start with a 7-day trial. After that (or
+                        any time you want to (re)subscribe), use the button below — it opens Dodo's secure checkout.</p>
+                    <button class="btn btn-teal btn-block" id="billingCheckoutBtn" style="margin-top:6px;">Open billing
+                        checkout</button>
+                </div>
+            </section>
+
+            <!-- ACCOUNT VIEW -->
+            <section class="view" id="view-account">
+                <div class="page-head">
+                    <div>
+                        <h1>Account</h1>
+                        <p>Manage your connected Instagram account.</p>
+                    </div>
+                </div>
+                <div class="card account-card">
+                    <h3 style="font-size:16px;">Signed in as</h3>
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px;">
+                        <img id="accountAvatar"
+                            style="width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none;display:none;"
+                            alt="" />
+                        <div style="font-weight:600;font-size:15px;text-align:center;" id="accountUsername">—</div>
+                    </div>
+                    <button class="btn btn-outline" id="accountLogoutBtn">Sign out of this device</button>
+                </div>
+                <div class="card account-card">
+                    <h3 style="font-size:16px;">Privacy &amp; data</h3>
+                    <p>See what data Zephyr collects, how it's used, and how to request deletion.</p>
+                    <a class="btn btn-outline" href="/privacy-policy" target="_blank" rel="noopener">View privacy
+                        policy</a>
+                </div>
+                <div class="card account-card danger-zone">
+                    <h3 style="font-size:16px;">Disconnect Instagram</h3>
+                    <p>Unsubscribe Zephyr from your account and permanently delete your data.</p>
+                    <a class="btn btn-danger" href="/data-deletion">Delete my account</a>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Rule create/edit modal -->
+    <div class="modal-overlay" id="ruleModalOverlay">
+        <div class="modal">
+            <div class="modal-head">
+                <h2 id="ruleModalTitle">New rule</h2>
+                <button class="modal-close" id="ruleModalClose" aria-label="Close">&times;</button>
+            </div>
+            <form id="ruleForm">
+                <div class="field">
+                    <label for="ruleLink">Instagram post link</label>
+                    <input type="url" id="ruleLink" placeholder="https://instagram.com/p/…" required />
+                    <div class="field-hint">A post, reel, or carousel from your connected account.</div>
+                </div>
+                <div class="field">
+                    <label for="ruleCatchphrase">Catchphrase</label>
+                    <input type="text" id="ruleCatchphrase" placeholder="GUIDE" required />
+                    <div class="field-hint">Comments matching this text trigger the DM.</div>
+                </div>
+                <div class="field">
+                    <label style="margin-bottom:0;">Case sensitive</label>
+                    <label class="rule-toggle" style="margin-top:8px;">
+                        <span class="switch">
+                            <input type="checkbox" id="ruleCaseSensitive" />
+                            <span class="track"></span>
+                        </span>
+                        <span id="ruleCaseSensitiveLabel">Off — matches any case</span>
+                    </label>
+                    <div class="field-hint">On: "GUIDE" only matches "GUIDE". Off: matches "guide", "Guide",
+                        "GUIDE".</div>
+                </div>
+                <div class="field">
+                    <label for="ruleReply">Public reply <span
+                            style="text-transform:none; font-weight:400;">(optional)</span></label>
+                    <div id="replyVariants" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    <button type="button" class="btn btn-ghost btn-sm" id="addReplyVariantBtn" style="margin-top:6px;">+
+                        Add variant</button>
+                    <div class="field-hint">Zephyr picks one at random for the public reply, if any are set.</div>
+                </div>
+                <div class="field">
+                    <label>DM message(s)</label>
+                    <div id="dmVariants" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    <button type="button" class="btn btn-ghost btn-sm" id="addVariantBtn" style="margin-top:6px;">+ Add
+                        variant</button>
+                    <div class="field-hint">Zephyr picks one at random. Add multiple for variety.</div>
+                </div>
+                <div class="field" id="ruleActiveField" style="display:none;">
+                    <label style="margin-bottom:0;">Status</label>
+                    <label class="rule-toggle" style="margin-top:8px;">
+                        <span class="switch">
+                            <input type="checkbox" id="ruleActive" checked />
+                            <span class="track"></span>
+                        </span>
+                        <span id="ruleActiveLabel">Active</span>
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost" id="ruleCancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-accent" id="ruleSubmitBtn">Save rule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete confirmation modal -->
+    <div class="modal-overlay" id="confirmModalOverlay">
+        <div class="modal" style="max-width:400px;">
+            <div class="modal-head">
+                <h2 id="confirmTitle">Are you sure?</h2>
+                <button class="modal-close" id="confirmClose" aria-label="Close">&times;</button>
+            </div>
+            <p id="confirmBody">This action can't be undone.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" id="confirmCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmOkBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/dashboard.js"></script>
+</body>
+
+</html>
