@@ -2,7 +2,7 @@
 import * as api from "./api.js";
 import { ApiError } from "./api.js";
 import type { RuleDto } from "./types.js";
-import { toast, escapeHtml, formatDate, requireEl } from "./ui.js";
+import { toast, escapeHtml, formatDate, requireEl, setHidden } from "./ui.js";
 
 // =========================================================
 // dm_message / reply_message normalization
@@ -52,9 +52,9 @@ function normalizeMessageArray(raw: unknown): string[] {
 }
 
 if (!api.tokens.isLoggedIn()) {
-  requireEl("authGate").style.display = "block";
+  setHidden(requireEl("authGate"), false);
 } else {
-  requireEl("app").style.display = "grid";
+  setHidden(requireEl("app"), false, "grid");
   boot();
 }
 
@@ -67,6 +67,10 @@ function boot(): void {
   }
 }
 
+// Utility classes swapped on the rail nav buttons to express active/inactive state.
+const NAV_ACTIVE = ["text-teal-deep", "bg-teal-soft", "font-semibold"];
+const NAV_INACTIVE = ["text-ink-soft", "font-medium", "hover:bg-bg-dim", "hover:text-ink"];
+
 function bootInner(): void {
   void api.getMe().then((profile) => {
     requireEl("railUsername").textContent = "@" + profile.username;
@@ -76,7 +80,7 @@ function bootInner(): void {
       const img = document.getElementById(id) as HTMLImageElement | null;
       if (img) {
         img.src = profile.profile_pic_url;
-        img.style.display = "block";
+        setHidden(img, false);
       }
     }
   }).catch(() => {
@@ -85,11 +89,15 @@ function bootInner(): void {
 
   // ---------- view switching ----------
   const views = document.querySelectorAll<HTMLElement>(".view");
-  const navLinks = document.querySelectorAll<HTMLButtonElement>(".rail-link[data-view]");
+  const navLinks = document.querySelectorAll<HTMLButtonElement>(".nav-link[data-view]");
 
   function showView(name: string): void {
-    views.forEach((v) => v.classList.toggle("is-active", v.id === "view-" + name));
-    navLinks.forEach((l) => l.classList.toggle("is-active", l.dataset.view === name));
+    views.forEach((v) => setHidden(v, v.id !== "view-" + name));
+    navLinks.forEach((l) => {
+      const isActive = l.dataset.view === name;
+      l.classList.remove(...NAV_ACTIVE, ...NAV_INACTIVE);
+      l.classList.add(...(isActive ? NAV_ACTIVE : NAV_INACTIVE));
+    });
     if (name === "billing") void refreshBillingStatus();
   }
   navLinks.forEach((l) => l.addEventListener("click", () => showView(l.dataset.view!)));
@@ -114,11 +122,11 @@ function bootInner(): void {
   function askConfirm(title: string, body: string): Promise<boolean> {
     requireEl("confirmTitle").textContent = title;
     requireEl("confirmBody").textContent = body;
-    confirmOverlay.classList.add("is-open");
+    setHidden(confirmOverlay, false, "flex");
     return new Promise((resolve) => { confirmResolver = resolve; });
   }
   function closeConfirm(result: boolean): void {
-    confirmOverlay.classList.remove("is-open");
+    setHidden(confirmOverlay, true, "flex");
     confirmResolver?.(result);
     confirmResolver = null;
   }
@@ -142,20 +150,21 @@ function bootInner(): void {
     const isDm = containerId === "dmVariants";
     const container = requireEl(containerId);
     const row = document.createElement("div");
-    row.style.cssText = "display:flex; gap:8px; align-items:flex-start;";
+    row.className = "flex items-start gap-2";
 
     const ta = document.createElement("textarea");
-    ta.className = isDm ? "dm-variant-input" : "reply-variant-input";
+    ta.className =
+      (isDm ? "dm-variant-input" : "reply-variant-input") +
+      ` flex-1 resize-y rounded-sm border border-line-strong bg-surface px-3.5 py-3 text-[15px] text-ink transition focus:border-teal focus:outline-none focus:ring-[3px] focus:ring-teal-soft ${isDm ? "min-h-[72px]" : "min-h-[60px]"}`;
     ta.placeholder = isDm ? "DM message…" : "Public reply…";
     ta.required = isDm;
     ta.value = value;
-    ta.style.cssText = "flex:1; min-height:" + (isDm ? "72px" : "60px") + ";";
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
-    removeBtn.className = "btn btn-ghost btn-sm";
+    removeBtn.className =
+      "mt-1 inline-flex flex-none items-center justify-center gap-2 rounded-md px-3.5 py-2 font-display text-[13.5px] font-semibold text-ink-soft transition hover:bg-teal/[0.06]";
     removeBtn.textContent = "✕";
-    removeBtn.style.cssText = "margin-top:4px; flex:none;";
     removeBtn.addEventListener("click", () => {
       if (isDm && container.querySelectorAll(".dm-variant-input").length <= 1) return;
       row.remove();
@@ -189,60 +198,62 @@ function bootInner(): void {
   const subBanner = requireEl("subBanner");
   const subBannerText = requireEl("subBannerText");
 
+  const BADGE_BASE = "inline-flex flex-none items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[11.5px] tracking-wide";
+
   function ruleCardHtml(rule: RuleDto): string {
     const dmMessages = normalizeMessageArray(rule.dm_message);
     const replyMessages = normalizeMessageArray(rule.reply_message);
     const statusBadge = rule.is_active
-      ? `<span class="badge">Active</span>`
-      : `<span class="badge is-off">Paused</span>`;
+      ? `<span class="${BADGE_BASE} bg-teal-soft text-teal">Active</span>`
+      : `<span class="${BADGE_BASE} bg-white/[0.06] text-ink-faint">Paused</span>`;
     const dmPreview = escapeHtml(dmMessages[0] ?? "") +
       (dmMessages.length > 1
-        ? ` <span style="color:var(--ink-faint);font-size:12px;">+${dmMessages.length - 1} variant${dmMessages.length > 2 ? "s" : ""}</span>`
+        ? ` <span class="text-xs text-ink-faint">+${dmMessages.length - 1} variant${dmMessages.length > 2 ? "s" : ""}</span>`
         : "");
     const replyPreview = replyMessages.length
       ? escapeHtml(replyMessages[0]) +
         (replyMessages.length > 1
-          ? ` <span style="color:var(--ink-faint);font-size:12px;">+${replyMessages.length - 1} variant${replyMessages.length > 2 ? "s" : ""}</span>`
+          ? ` <span class="text-xs text-ink-faint">+${replyMessages.length - 1} variant${replyMessages.length > 2 ? "s" : ""}</span>`
           : "")
       : "—";
     const caseSensitiveTag = rule.is_case_sensitive
-      ? ` <span style="color:var(--ink-faint);font-size:12px;">Case sensitive</span>`
+      ? ` <span class="text-xs text-ink-faint">Case sensitive</span>`
       : "";
     return `
-      <div class="card rule-card" data-id="${rule.id}">
-      <div class="rule-top">
-          <div class="rule-top-main">
-            <div class="rule-catch">"${escapeHtml(rule.catchphrase)}"</div>
-            <div class="rule-link"><a href="${escapeHtml(rule.link)}" target="_blank" rel="noopener">${escapeHtml(rule.link)}</a></div>
+      <div class="rule-card flex flex-col gap-3 rounded-lg border border-line bg-surface p-5 shadow-card" data-id="${rule.id}">
+        <div class="flex items-start justify-between gap-3.5">
+          <div class="min-w-0 flex-1">
+            <div class="break-words font-mono text-[15px] font-medium text-ink">"${escapeHtml(rule.catchphrase)}"</div>
+            <div class="mt-1 break-all text-xs text-ink-faint"><a class="text-teal hover:underline" href="${escapeHtml(rule.link)}" target="_blank" rel="noopener">${escapeHtml(rule.link)}</a></div>
           </div>
           ${statusBadge}
         </div>
-        <div class="rule-msgs">
+        <div class="grid grid-cols-1 gap-3.5 text-[13.5px] sm:grid-cols-2">
           <div>
-            <div class="lbl">DM message</div>
-            <div class="txt">${dmPreview}</div>
+            <div class="mb-1 font-mono text-[11px] uppercase tracking-wide text-ink-faint">DM message</div>
+            <div class="text-ink-soft">${dmPreview}</div>
           </div>
           <div>
-            <div class="lbl">Public reply</div>
-            <div class="txt">${replyPreview}</div>
+            <div class="mb-1 font-mono text-[11px] uppercase tracking-wide text-ink-faint">Public reply</div>
+            <div class="text-ink-soft">${replyPreview}</div>
           </div>
         </div>
-        <div class="rule-foot">
-          <div class="rule-stats">
-            <span><span class="num">${rule.count}</span> sent</span>
+        <div class="flex flex-wrap items-center justify-between gap-2.5 border-t border-dashed border-line pt-2.5">
+          <div class="flex items-center gap-4 font-mono text-[13px] text-ink-soft">
+            <span><span class="font-semibold text-ink">${rule.count}</span> sent</span>
             <span>Since ${formatDate(rule.created_at)}</span>
             ${caseSensitiveTag}
           </div>
-          <div class="rule-actions">
-            <label class="rule-toggle">
-              <span class="switch">
-                <input type="checkbox" class="toggle-active" ${rule.is_active ? "checked" : ""} />
-                <span class="track"></span>
+          <div class="flex items-center gap-2">
+            <label class="flex cursor-pointer items-center gap-2 text-xs text-ink-soft">
+              <span class="relative inline-flex h-[22px] w-10 flex-none cursor-pointer">
+                <input type="checkbox" class="toggle-active peer absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0" ${rule.is_active ? "checked" : ""} />
+                <span class="pointer-events-none absolute inset-0 rounded-full bg-line-strong transition-colors duration-150 peer-checked:bg-teal after:absolute after:left-[3px] after:top-[3px] after:h-4 after:w-4 after:rounded-full after:bg-surface after:transition-transform after:duration-150 after:content-[''] peer-checked:after:translate-x-[18px]"></span>
               </span>
               ${rule.is_active ? "On" : "Off"}
             </label>
-            <button class="btn btn-ghost btn-sm edit-btn">Edit</button>
-            <button class="btn btn-danger btn-sm delete-btn">Delete</button>
+            <button class="edit-btn inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 font-display text-[13.5px] font-semibold text-ink-soft transition hover:bg-teal/[0.06]">Edit</button>
+            <button class="delete-btn inline-flex items-center justify-center gap-2 rounded-md border border-danger-line px-3.5 py-2 font-display text-[13.5px] font-semibold text-danger transition hover:bg-danger-soft">Delete</button>
           </div>
         </div>
       </div>`;
@@ -250,18 +261,18 @@ function bootInner(): void {
 
   async function loadRules(page = 1): Promise<void> {
     currentPage = page;
-    rulesLoading.style.display = "flex";
-    rulesList.style.display = "none";
-    rulesEmpty.style.display = "none";
-    pager.style.display = "none";
+    setHidden(rulesLoading, false, "flex");
+    setHidden(rulesList, true, "flex");
+    setHidden(rulesEmpty, true);
+    setHidden(pager, true, "flex");
 
     try {
       const rules = await api.listRules(page, PAGE_SIZE);
-      subBanner.style.display = "none";
-      rulesLoading.style.display = "none";
+      setHidden(subBanner, true, "flex");
+      setHidden(rulesLoading, true, "flex");
 
       if (rules.length === 0 && page === 1) {
-        rulesEmpty.style.display = "block";
+        setHidden(rulesEmpty, false);
         return;
       }
       if (rules.length === 0 && page > 1) {
@@ -270,19 +281,19 @@ function bootInner(): void {
       }
 
       rulesList.innerHTML = rules.map(ruleCardHtml).join("");
-      rulesList.style.display = "flex";
+      setHidden(rulesList, false, "flex");
       wireRuleCardEvents();
 
-      pager.style.display = "flex";
+      setHidden(pager, false, "flex");
       pageLabel.textContent = `Page ${page}`;
       (document.getElementById("prevPageBtn") as HTMLButtonElement).disabled = page <= 1;
       (document.getElementById("nextPageBtn") as HTMLButtonElement).disabled = rules.length < PAGE_SIZE;
     } catch (e) {
-      rulesLoading.style.display = "none";
+      setHidden(rulesLoading, true, "flex");
       if (e instanceof ApiError && e.status === 403) {
-        rulesEmpty.style.display = "none";
-        rulesList.style.display = "none";
-        subBanner.style.display = "flex";
+        setHidden(rulesEmpty, true);
+        setHidden(rulesList, true, "flex");
+        setHidden(subBanner, false, "flex");
         subBannerText.textContent =
           e.detail === "No active subscription"
             ? "Your trial has ended. Start a subscription to keep your rules running."
@@ -356,7 +367,7 @@ function bootInner(): void {
     ruleForm.reset();
     renderVariants("dmVariants", [""]);
     renderVariants("replyVariants", []);
-    ruleActiveField.style.display = editingRuleId ? "block" : "none";
+    setHidden(ruleActiveField, !editingRuleId);
     ruleCaseSensitiveInput.checked = false;
     ruleCaseSensitiveLabel.textContent = "Off — matches any case";
 
@@ -384,12 +395,12 @@ function bootInner(): void {
       ruleModalTitle.textContent = "New rule";
       ruleSubmitBtn.textContent = "Create rule";
     }
-    ruleModalOverlay.classList.add("is-open");
+    setHidden(ruleModalOverlay, false, "flex");
     requireEl("ruleLink").focus();
   }
 
   function closeRuleModal(): void {
-    ruleModalOverlay.classList.remove("is-open");
+    setHidden(ruleModalOverlay, true, "flex");
     editingRuleId = null;
   }
 
@@ -451,6 +462,12 @@ function bootInner(): void {
   // =========================================================
   // BILLING
   // =========================================================
+  const BILLING_COLOR_CLASSES = ["text-ink-soft", "text-teal-deep", "text-accent-deep"];
+  function setBillingColor(el: HTMLElement, cls: (typeof BILLING_COLOR_CLASSES)[number]): void {
+    el.classList.remove(...BILLING_COLOR_CLASSES);
+    el.classList.add(cls);
+  }
+
   async function openCheckout(): Promise<void> {
     try {
       const url = await api.startCheckout();
@@ -464,16 +481,18 @@ function bootInner(): void {
 
   async function refreshBillingStatus(): Promise<void> {
     const el = requireEl("billingStatus");
-    const btn = requireEl("billingCheckoutBtn");
+    const btn = requireEl<HTMLButtonElement>("billingCheckoutBtn");
+    setBillingColor(el, "text-ink-soft");
     el.textContent = "Checking…";
     try {
       const active = await api.hasActiveSubscription();
       el.textContent = active ? "Active" : "Inactive — subscribe to continue";
-      el.style.color = active ? "var(--teal-deep)" : "var(--accent-deep)";
-      btn.style.display = active ? "none" : "block";
+      setBillingColor(el, active ? "text-teal-deep" : "text-accent-deep");
+      setHidden(btn, active);
     } catch {
       el.textContent = "Unknown";
-      btn.style.display = "block";
+      setBillingColor(el, "text-ink-soft");
+      setHidden(btn, false);
     }
   }
 

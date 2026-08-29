@@ -1,15 +1,19 @@
 {
   "name": "zephyr-frontend-ts",
-  "version": "1.0.0",
-  "description": "Zephyr frontend — HTML/CSS + TypeScript, compiled to native ES modules, no bundler.",
+  "version": "2.0.0",
+  "description": "Zephyr frontend — HTML + TypeScript + Tailwind CSS, compiled to native ES modules, no bundler.",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
+    "build:ts": "tsc",
+    "build:css": "tailwindcss -i ./css/tailwind.css -o ./css/style.css --minify",
+    "build": "npm run build:ts && npm run build:css",
+    "watch:ts": "tsc --watch",
+    "watch:css": "tailwindcss -i ./css/tailwind.css -o ./css/style.css --watch",
     "serve": "npx --yes http-server -p 5500 -c-1"
   },
   "devDependencies": {
+    "tailwindcss": "^3.4.13",
     "typescript": "^5.5.4"
   }
 }

@@ -1,4 +1,4 @@
-# ---- stage 1: compile the TS frontend ----
+# ---- stage 1: compile the TS frontend + Tailwind CSS ----
 FROM node:20-alpine AS frontend-build
 WORKDIR /frontend
 
@@ -6,7 +6,7 @@ COPY zephyr-frontend-ts/zephyr-frontend-ts/package.json zephyr-frontend-ts/zephy
 RUN npm install
 
 COPY zephyr-frontend-ts/zephyr-frontend-ts/ ./
-RUN npm run build   # tsc: src/*.ts -> js/*.js
+RUN npm run build   # tsc: src/*.ts -> js/*.js, tailwindcss: css/tailwind.css -> css/style.css
 
 # ---- stage 2: python backend + built frontend ----
 FROM python:3.12-slim
@@ -25,7 +25,7 @@ COPY zephyr-frontend-ts/zephyr-frontend-ts/dashboard.html frontend/
 COPY zephyr-frontend-ts/zephyr-frontend-ts/login-callback.html frontend/
 COPY zephyr-frontend-ts/zephyr-frontend-ts/privacy-policy.html frontend/
 COPY zephyr-frontend-ts/zephyr-frontend-ts/data-deletion.html frontend/
-COPY zephyr-frontend-ts/zephyr-frontend-ts/css/ frontend/css/
+COPY --from=frontend-build /frontend/css/style.css frontend/css/style.css
 COPY --from=frontend-build /frontend/js/ frontend/js/
 
 EXPOSE 8000

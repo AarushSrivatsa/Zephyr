@@ -1,11 +1,21 @@
 // Zephyr — tiny shared UI helpers
 export type ToastKind = "default" | "ok" | "error";
 
+const TOAST_BASE =
+  "pointer-events-auto max-w-[320px] rounded-sm border px-4 py-3 font-body text-sm shadow-pop animate-toast-in";
+const TOAST_KIND: Record<ToastKind, string> = {
+  default: "border-line-strong bg-surface text-ink",
+  ok: "border-teal bg-surface text-teal",
+  error: "border-danger bg-surface text-danger",
+};
+
 function ensureStack(): HTMLElement {
-  let stack = document.querySelector<HTMLElement>(".toast-stack");
+  let stack = document.querySelector<HTMLElement>("[data-toast-stack]");
   if (!stack) {
     stack = document.createElement("div");
-    stack.className = "toast-stack";
+    stack.dataset.toastStack = "";
+    stack.className =
+      "pointer-events-none fixed bottom-6 right-6 z-[200] flex flex-col items-end gap-2.5";
     document.body.appendChild(stack);
   }
   return stack;
@@ -14,12 +24,11 @@ function ensureStack(): HTMLElement {
 export function toast(message: string, kind: ToastKind = "default", timeout = 4200): void {
   const stack = ensureStack();
   const el = document.createElement("div");
-  el.className = "toast" + (kind === "error" ? " is-error" : kind === "ok" ? " is-ok" : "");
+  el.className = `${TOAST_BASE} ${TOAST_KIND[kind]}`;
   el.textContent = message;
   stack.appendChild(el);
   setTimeout(() => {
-    el.style.opacity = "0";
-    el.style.transition = "opacity .2s ease";
+    el.classList.add("transition-opacity", "duration-200", "opacity-0");
     setTimeout(() => el.remove(), 220);
   }, timeout);
 }
@@ -51,4 +60,14 @@ export function requireEl<T extends HTMLElement = HTMLElement>(id: string): T {
   const el = document.getElementById(id);
   if (!el) throw new Error(`Expected element #${id} to exist`);
   return el as T;
+}
+
+/**
+ * Show/hide via Tailwind's `hidden` utility instead of inline style.display
+ * flips. Explicitly toggles both classes (rather than just `hidden`) so the
+ * result never depends on the generated stylesheet's utility ordering.
+ */
+export function setHidden(el: HTMLElement, hidden: boolean, showDisplay: "block" | "flex" | "grid" | "inline-flex" = "block"): void {
+  el.classList.toggle("hidden", hidden);
+  el.classList.toggle(showDisplay, !hidden);
 }

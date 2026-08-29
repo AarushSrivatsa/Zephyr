@@ -4,5 +4,6 @@ __pycache__/
 .git/
 zephyr-frontend-ts/zephyr-frontend-ts/node_modules/
 zephyr-frontend-ts/zephyr-frontend-ts/js/
+zephyr-frontend-ts/zephyr-frontend-ts/css/style.css
 *.pyc
 *.log

@@ -11,627 +11,213 @@
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="css/style.css" />
-    <style>
-        .app {
-            display: grid;
-            grid-template-columns: 232px 1fr;
-            min-height: 100vh;
-        }
-
-        .rail {
-            background: var(--surface);
-            border-right: 1px solid var(--line);
-            display: flex;
-            flex-direction: column;
-            padding: 22px 16px;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-        }
-
-        .rail .wordmark {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 18px;
-            text-decoration: none;
-            color: var(--ink);
-            padding: 6px 8px 22px;
-        }
-
-        .rail-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            flex: 1;
-        }
-
-        .rail-link {
-            display: flex;
-            align-items: center;
-            gap: 11px;
-            padding: 10px 12px;
-            border-radius: var(--radius-sm);
-            font-size: 14.5px;
-            font-weight: 500;
-            color: var(--ink-soft);
-            text-decoration: none;
-            cursor: pointer;
-            border: none;
-            background: none;
-            text-align: left;
-            width: 100%;
-            font-family: var(--font-body);
-        }
-
-        .rail-link:hover {
-            background: var(--bg-dim);
-            color: var(--ink);
-        }
-
-        .rail-link.is-active {
-            background: var(--teal-soft);
-            color: var(--teal-deep);
-            font-weight: 600;
-        }
-
-        .rail-link .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: currentColor;
-            opacity: .55;
-            flex: none;
-        }
-
-        .rail-foot {
-            border-top: 1px solid var(--line);
-            padding-top: 14px;
-            margin-top: 10px;
-        }
-
-        .main {
-            padding: 40px 44px 80px;
-            max-width: 980px;
-        }
-
-        .view {
-            display: none;
-        }
-
-        .view.is-active {
-            display: block;
-        }
-
-        .page-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 28px;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .page-head h1 {
-            font-size: 26px;
-            margin-bottom: 4px;
-        }
-
-        .page-head p {
-            margin: 0;
-            font-size: 14px;
-        }
-
-        .banner {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            flex-wrap: wrap;
-            padding: 16px 20px;
-            border-radius: var(--radius-md);
-            background: var(--accent-soft);
-            border: 1px solid rgba(178, 61, 34, 0.18);
-            margin-bottom: 26px;
-        }
-
-        .banner p {
-            margin: 0;
-            color: var(--accent-deep);
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .rules-list {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .rule-card {
-            padding: 20px 22px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .rule-top {
-            display: flex;
-            justify-content: space-between;
-            gap: 14px;
-            align-items: flex-start;
-        }
-
-        .rule-catch {
-            font-family: var(--font-mono);
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--ink);
-        }
-
-        .rule-link {
-            font-size: 12.5px;
-            color: var(--ink-faint);
-            word-break: break-all;
-        }
-
-        .rule-link a {
-            color: var(--teal);
-            text-decoration: none;
-        }
-
-        .rule-link a:hover {
-            text-decoration: underline;
-        }
-
-        .rule-msgs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            font-size: 13.5px;
-        }
-
-        .rule-msgs .lbl {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            color: var(--ink-faint);
-            margin-bottom: 4px;
-        }
-
-        .rule-msgs .txt {
-            color: var(--ink-soft);
-        }
-
-        .rule-foot {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 10px;
-            border-top: 1px dashed var(--line);
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .rule-stats {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            color: var(--ink-soft);
-        }
-
-        .rule-stats .num {
-            color: var(--ink);
-            font-weight: 600;
-        }
-
-        .rule-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .rule-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12.5px;
-            color: var(--ink-soft);
-            cursor: pointer;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 70px 20px;
-        }
-
-        .empty-state .glyph {
-            font-size: 34px;
-            margin-bottom: 12px;
-        }
-
-        .empty-state h3 {
-            font-size: 17px;
-            margin-bottom: 6px;
-        }
-
-        .empty-state p {
-            max-width: 360px;
-            margin: 0 auto 20px;
-        }
-
-        .pager {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            margin-top: 26px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            color: var(--ink-soft);
-        }
-
-        .loading-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 40px 0;
-            justify-content: center;
-            color: var(--ink-faint);
-            font-size: 14px;
-        }
-
-        /* billing */
-        .billing-card {
-            padding: 30px 32px;
-            max-width: 480px;
-        }
-
-        .billing-card h3 {
-            font-size: 18px;
-        }
-
-        .billing-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px dashed var(--line);
-            font-size: 14px;
-        }
-
-        .billing-row:last-of-type {
-            border-bottom: none;
-        }
-
-        .billing-row .k {
-            color: var(--ink-faint);
-            font-family: var(--font-mono);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-        }
-
-        /* account */
-        .account-card {
-            padding: 30px 32px;
-            max-width: 480px;
-            margin-bottom: 20px;
-        }
-
-        .danger-zone {
-            border-color: rgba(178, 61, 34, 0.25);
-        }
-
-        .danger-zone h3 {
-            color: var(--accent-deep);
-        }
-
-        /* modal */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(25, 31, 27, 0.45);
-            backdrop-filter: blur(2px);
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding: 6vh 20px;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .15s ease;
-            overflow-y: auto;
-        }
-
-        .modal-overlay.is-open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .modal {
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-pop);
-            width: 100%;
-            max-width: 520px;
-            max-height: 88vh;
-            overflow-y: auto;
-            padding: 30px 30px 26px;
-            transform: translateY(-8px);
-            transition: transform .15s ease;
-        }
-
-        .modal-overlay.is-open .modal {
-            transform: translateY(0);
-        }
-
-        .modal-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-head h2 {
-            font-size: 19px;
-            margin: 0;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 20px;
-            color: var(--ink-faint);
-            line-height: 1;
-            padding: 4px;
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 22px;
-        }
-
-        @media (max-width: 760px) {
-            .app {
-                grid-template-columns: 1fr;
-            }
-
-            .rail {
-                position: static;
-                height: auto;
-                flex-direction: row;
-                align-items: center;
-                padding: 14px 16px;
-            }
-
-            .rail .wordmark {
-                padding: 0;
-            }
-
-            .rail-nav {
-                flex-direction: row;
-            }
-
-            .rail-foot {
-                display: none;
-            }
-
-            .main {
-                padding: 26px 18px 60px;
-            }
-
-            .rule-msgs {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
 </head>
 
-<body>
+<body class="min-h-screen bg-bg font-body text-ink antialiased">
 
-    <div id="authGate" class="card"
-        style="max-width:420px; margin:14vh auto; padding:32px; text-align:center; display:none;">
-        <h1 style="font-size:19px;">Sign in required</h1>
-        <p>Connect your Instagram account to view your dashboard.</p>
-        <a class="btn btn-accent" href="index.html">Back to Zephyr</a>
+    <!-- Signed-out gate -->
+    <div id="authGate" class="mx-auto mt-[14vh] hidden w-full max-w-[420px] rounded-lg border border-line bg-surface p-8 text-center shadow-card">
+        <h1 class="font-display text-[19px] font-semibold text-ink">Sign in required</h1>
+        <p class="mb-4 mt-2 text-ink-soft">Connect your Instagram account to view your dashboard.</p>
+        <a class="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-[22px] py-[13px] font-display text-[15px] font-semibold text-[#150014] shadow-glow-accent transition duration-150 hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg" href="index.html">Back to Zephyr</a>
     </div>
 
-    <div class="app" id="app" style="display:none;">
-        <aside class="rail">
-            <a class="wordmark" href="index.html">
-                <svg width="24" height="24" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-                    <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF5A36"
+    <div class="hidden min-h-screen md:grid md:grid-cols-[232px_1fr]" id="app">
+
+        <!-- ============ RAIL ============ -->
+        <aside class="sticky top-0 flex h-auto flex-row items-center gap-4 border-b border-line bg-surface px-4 py-3.5 md:h-screen md:flex-col md:items-stretch md:gap-0 md:border-b-0 md:border-r md:py-[22px]">
+            <a class="flex items-center gap-2.5 px-2 font-display text-lg font-bold text-ink md:pb-[22px] md:pt-1.5" href="index.html">
+                <svg width="22" height="22" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+                    <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF2EE0"
                         stroke-width="2" stroke-linecap="round" />
-                    <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#1F5E5B"
+                    <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#00F0FF"
                         stroke-width="2" stroke-linecap="round" />
                 </svg>
                 Zephyr
             </a>
-            <nav class="rail-nav">
-                <button class="rail-link is-active" data-view="rules"><span class="dot"></span>Rules</button>
-                <button class="rail-link" data-view="billing"><span class="dot"></span>Billing</button>
-                <button class="rail-link" data-view="account"><span class="dot"></span>Account</button>
+
+            <nav class="flex flex-1 flex-row gap-1 overflow-x-auto md:flex-col md:overflow-visible">
+                <button data-view="rules" class="nav-link flex w-full items-center gap-2.5 whitespace-nowrap rounded-sm px-3 py-2.5 text-left font-body text-[14.5px] font-semibold text-teal-deep bg-teal-soft transition-colors">
+                    <span class="h-1.5 w-1.5 flex-none rounded-full bg-current opacity-55"></span>Rules
+                </button>
+                <button data-view="billing" class="nav-link flex w-full items-center gap-2.5 whitespace-nowrap rounded-sm px-3 py-2.5 text-left font-body text-[14.5px] font-medium text-ink-soft transition-colors hover:bg-bg-dim hover:text-ink">
+                    <span class="h-1.5 w-1.5 flex-none rounded-full bg-current opacity-55"></span>Billing
+                </button>
+                <button data-view="account" class="nav-link flex w-full items-center gap-2.5 whitespace-nowrap rounded-sm px-3 py-2.5 text-left font-body text-[14.5px] font-medium text-ink-soft transition-colors hover:bg-bg-dim hover:text-ink">
+                    <span class="h-1.5 w-1.5 flex-none rounded-full bg-current opacity-55"></span>Account
+                </button>
             </nav>
-            <div class="rail-foot">
-                <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:0 12px 10px;">
-                    <img id="railAvatar"
-                        style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex:none;display:none;"
-                        alt="" />
-                    <div style="font-size:13px;font-weight:600;color:var(--ink);" id="railUsername">—</div>
+
+            <div class="hidden flex-none border-t border-line pt-3.5 md:block">
+                <div class="mb-1 flex items-center justify-center gap-2.5 px-3 pb-2.5">
+                    <img id="railAvatar" class="hidden h-7 w-7 flex-none rounded-full object-cover" alt="" />
+                    <div class="text-[13px] font-semibold text-ink" id="railUsername">—</div>
                 </div>
-                <button class="rail-link" id="logoutBtn"><span class="dot"></span>Sign out</button>
+                <button id="logoutBtn" class="flex w-full items-center gap-2.5 rounded-sm px-3 py-2.5 text-left font-body text-[14.5px] font-medium text-ink-soft transition-colors hover:bg-bg-dim hover:text-ink">
+                    <span class="h-1.5 w-1.5 flex-none rounded-full bg-current opacity-55"></span>Sign out
+                </button>
             </div>
         </aside>
 
-        <main class="main">
+        <main class="px-5 pb-20 pt-6 md:px-11 md:pb-20 md:pt-10">
+            <div class="mx-auto max-w-[980px]">
 
-            <!-- RULES VIEW -->
-            <section class="view is-active" id="view-rules">
-                <div class="page-head">
+            <!-- ============ RULES VIEW ============ -->
+            <section class="view" id="view-rules">
+                <div class="mb-7 flex flex-wrap items-end justify-between gap-4">
                     <div>
-                        <h1>Rules</h1>
-                        <p>Every catchphrase you're watching for, across your posts.</p>
+                        <h1 class="font-display text-[26px] font-semibold text-ink">Rules</h1>
+                        <p class="mt-1 text-sm text-ink-soft">Every catchphrase you're watching for, across your posts.</p>
                     </div>
-                    <button class="btn btn-accent" id="newRuleBtn">+ New rule</button>
+                    <button id="newRuleBtn" class="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-[22px] py-[13px] font-display text-[15px] font-semibold text-[#150014] shadow-glow-accent transition duration-150 hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg">+ New rule</button>
                 </div>
 
-                <div class="banner" id="subBanner" style="display:none;">
-                    <p id="subBannerText">Your trial has ended. Start a subscription to keep rules running.</p>
-                    <button class="btn btn-teal btn-sm" id="subBannerBtn">Manage billing</button>
+                <div id="subBanner" class="mb-[26px] hidden flex-wrap items-center justify-between gap-4 rounded-md border border-danger-line bg-accent-soft px-5 py-4">
+                    <p id="subBannerText" class="m-0 text-sm font-medium text-accent-deep">Your trial has ended. Start a subscription to keep rules running.</p>
+                    <button id="subBannerBtn" class="inline-flex flex-none items-center justify-center gap-2 rounded-md bg-teal px-3.5 py-2 font-display text-[13.5px] font-semibold text-[#001417] shadow-glow-teal transition hover:bg-teal-deep">Manage billing</button>
                 </div>
 
-                <div id="rulesLoading" class="loading-row"><span class="spinner"></span> Loading your rules…</div>
-                <div id="rulesList" class="rules-list" style="display:none;"></div>
-                <div id="rulesEmpty" class="empty-state card" style="display:none;">
-                    <div class="glyph">🪁</div>
-                    <h3>No rules yet</h3>
-                    <p>Create your first rule to start turning comments into DMs.</p>
-                    <button class="btn btn-accent" id="emptyNewRuleBtn">+ New rule</button>
+                <div id="rulesLoading" class="flex items-center justify-center gap-2.5 py-10 text-sm text-ink-faint">
+                    <span class="h-[18px] w-[18px] flex-none animate-spin rounded-full border-[2.5px] border-teal-soft border-t-teal"></span> Loading your rules…
                 </div>
-                <div class="pager" id="pager" style="display:none;">
-                    <button class="btn btn-ghost btn-sm" id="prevPageBtn">← Prev</button>
+
+                <div id="rulesList" class="hidden flex-col gap-3.5"></div>
+
+                <div id="rulesEmpty" class="hidden rounded-lg border border-line bg-surface p-[70px_20px] text-center shadow-card">
+                    <div class="mb-3 text-[34px]">🪁</div>
+                    <h3 class="mb-1.5 font-display text-[17px] font-semibold text-ink">No rules yet</h3>
+                    <p class="mx-auto mb-5 max-w-[360px] text-ink-soft">Create your first rule to start turning comments into DMs.</p>
+                    <button id="emptyNewRuleBtn" class="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-[22px] py-[13px] font-display text-[15px] font-semibold text-[#150014] shadow-glow-accent transition duration-150 hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg">+ New rule</button>
+                </div>
+
+                <div id="pager" class="mt-6 hidden items-center justify-center gap-3.5 font-mono text-[13px] text-ink-soft">
+                    <button id="prevPageBtn" class="inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 font-display text-[13.5px] font-semibold text-ink-soft transition hover:bg-teal/[0.06] disabled:pointer-events-none disabled:opacity-40">← Prev</button>
                     <span id="pageLabel">Page 1</span>
-                    <button class="btn btn-ghost btn-sm" id="nextPageBtn">Next →</button>
+                    <button id="nextPageBtn" class="inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 font-display text-[13.5px] font-semibold text-ink-soft transition hover:bg-teal/[0.06] disabled:pointer-events-none disabled:opacity-40">Next →</button>
                 </div>
             </section>
 
-            <!-- BILLING VIEW -->
-            <section class="view" id="view-billing">
-                <div class="page-head">
-                    <div>
-                        <h1>Billing</h1>
-                        <p>Zephyr is $1/week, billed by Dodo Payments.</p>
-                    </div>
+            <!-- ============ BILLING VIEW ============ -->
+            <section class="view hidden" id="view-billing">
+                <div class="mb-7">
+                    <h1 class="font-display text-[26px] font-semibold text-ink">Billing</h1>
+                    <p class="mt-1 text-sm text-ink-soft">Zephyr is $1/week, billed by Dodo Payments.</p>
                 </div>
-                <div class="card billing-card">
-                    <h3>Subscription</h3>
-                    <div class="billing-row"><span class="k">Plan</span><span>Zephyr — $1/week</span></div>
-                    <div class="billing-row"><span class="k">Status</span><span id="billingStatus">Checking…</span>
+                <div class="max-w-[480px] rounded-lg border border-line bg-surface p-[30px_32px] shadow-card">
+                    <h3 class="font-display text-lg font-semibold text-ink">Subscription</h3>
+                    <div class="flex items-center justify-between border-b border-dashed border-line py-3 text-sm">
+                        <span class="font-mono text-xs uppercase tracking-wide text-ink-faint">Plan</span><span>Zephyr — $1/week</span>
                     </div>
-                    <p style="margin-top:18px; font-size:13px;">New connections start with a 7-day trial. After that (or
-                        any time you want to (re)subscribe), use the button below — it opens Dodo's secure checkout.</p>
-                    <button class="btn btn-teal btn-block" id="billingCheckoutBtn" style="margin-top:6px;">Open billing
-                        checkout</button>
+                    <div class="flex items-center justify-between border-b-0 py-3 text-sm">
+                        <span class="font-mono text-xs uppercase tracking-wide text-ink-faint">Status</span><span id="billingStatus">Checking…</span>
+                    </div>
+                    <p class="mt-[18px] text-[13px] text-ink-soft">New connections start with a 7-day trial. After that (or any time you want to (re)subscribe), use the button below — it opens Dodo's secure checkout.</p>
+                    <button id="billingCheckoutBtn" class="mt-1.5 inline-flex w-full items-center justify-center gap-2 rounded-md bg-teal px-[22px] py-[13px] font-display text-[15px] font-semibold text-[#001417] shadow-glow-teal transition hover:bg-teal-deep">Open billing checkout</button>
                 </div>
             </section>
 
-            <!-- ACCOUNT VIEW -->
-            <section class="view" id="view-account">
-                <div class="page-head">
-                    <div>
-                        <h1>Account</h1>
-                        <p>Manage your connected Instagram account.</p>
+            <!-- ============ ACCOUNT VIEW ============ -->
+            <section class="view hidden" id="view-account">
+                <div class="mb-7">
+                    <h1 class="font-display text-[26px] font-semibold text-ink">Account</h1>
+                    <p class="mt-1 text-sm text-ink-soft">Manage your connected Instagram account.</p>
+                </div>
+                <div class="mb-5 max-w-[480px] rounded-lg border border-line bg-surface p-[30px_32px] shadow-card">
+                    <h3 class="font-display text-base font-semibold text-ink">Signed in as</h3>
+                    <div class="mb-4 mt-3 flex flex-col items-center gap-2.5">
+                        <img id="accountAvatar" class="hidden h-[52px] w-[52px] flex-none rounded-full object-cover" alt="" />
+                        <div class="text-center text-[15px] font-semibold text-ink" id="accountUsername">—</div>
                     </div>
+                    <button id="accountLogoutBtn" class="inline-flex items-center justify-center gap-2 rounded-md border border-line-strong bg-transparent px-[22px] py-[13px] font-display text-[15px] font-semibold text-ink transition hover:bg-teal/[0.06]">Sign out of this device</button>
                 </div>
-                <div class="card account-card">
-                    <h3 style="font-size:16px;">Signed in as</h3>
-                    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:16px;">
-                        <img id="accountAvatar"
-                            style="width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none;display:none;"
-                            alt="" />
-                        <div style="font-weight:600;font-size:15px;text-align:center;" id="accountUsername">—</div>
-                    </div>
-                    <button class="btn btn-outline" id="accountLogoutBtn">Sign out of this device</button>
+                <div class="mb-5 max-w-[480px] rounded-lg border border-line bg-surface p-[30px_32px] shadow-card">
+                    <h3 class="font-display text-base font-semibold text-ink">Privacy &amp; data</h3>
+                    <p class="mb-4 mt-2 text-ink-soft">See what data Zephyr collects, how it's used, and how to request deletion.</p>
+                    <a class="inline-flex items-center justify-center gap-2 rounded-md border border-line-strong bg-transparent px-[22px] py-[13px] font-display text-[15px] font-semibold text-ink transition hover:bg-teal/[0.06]" href="/privacy-policy" target="_blank" rel="noopener">View privacy policy</a>
                 </div>
-                <div class="card account-card">
-                    <h3 style="font-size:16px;">Privacy &amp; data</h3>
-                    <p>See what data Zephyr collects, how it's used, and how to request deletion.</p>
-                    <a class="btn btn-outline" href="/privacy-policy" target="_blank" rel="noopener">View privacy
-                        policy</a>
-                </div>
-                <div class="card account-card danger-zone">
-                    <h3 style="font-size:16px;">Disconnect Instagram</h3>
-                    <p>Unsubscribe Zephyr from your account and permanently delete your data.</p>
-                    <a class="btn btn-danger" href="/data-deletion">Delete my account</a>
+                <div class="max-w-[480px] rounded-lg border border-danger-line bg-surface p-[30px_32px] shadow-card">
+                    <h3 class="font-display text-base font-semibold text-accent-deep">Disconnect Instagram</h3>
+                    <p class="mb-4 mt-2 text-ink-soft">Unsubscribe Zephyr from your account and permanently delete your data.</p>
+                    <a class="inline-flex items-center justify-center gap-2 rounded-md border border-danger-line bg-transparent px-[22px] py-[13px] font-display text-[15px] font-semibold text-danger transition hover:bg-danger-soft" href="/data-deletion">Delete my account</a>
                 </div>
             </section>
 
+            </div>
         </main>
     </div>
 
-    <!-- Rule create/edit modal -->
-    <div class="modal-overlay" id="ruleModalOverlay">
-        <div class="modal">
-            <div class="modal-head">
-                <h2 id="ruleModalTitle">New rule</h2>
-                <button class="modal-close" id="ruleModalClose" aria-label="Close">&times;</button>
+    <!-- ============ Rule create/edit modal ============ -->
+    <div id="ruleModalOverlay" class="fixed inset-0 z-[100] hidden items-start justify-center overflow-y-auto bg-[rgba(7,7,13,0.6)] px-5 py-[6vh] backdrop-blur-[2px]">
+        <div class="w-full max-w-[520px] max-h-[88vh] overflow-y-auto rounded-lg bg-surface p-[30px_30px_26px] shadow-pop">
+            <div class="mb-5 flex items-center justify-between">
+                <h2 id="ruleModalTitle" class="m-0 font-display text-[19px] font-semibold text-ink">New rule</h2>
+                <button id="ruleModalClose" aria-label="Close" class="p-1 text-xl leading-none text-ink-faint transition hover:text-ink">&times;</button>
             </div>
             <form id="ruleForm">
-                <div class="field">
-                    <label for="ruleLink">Instagram post link</label>
-                    <input type="url" id="ruleLink" placeholder="https://instagram.com/p/…" required />
-                    <div class="field-hint">A post, reel, or carousel from your connected account.</div>
+                <div class="mb-[18px]">
+                    <label for="ruleLink" class="mb-[7px] block font-mono text-xs uppercase tracking-wide text-ink-soft">Instagram post link</label>
+                    <input type="url" id="ruleLink" placeholder="https://instagram.com/p/…" required
+                        class="w-full rounded-sm border border-line-strong bg-surface px-3.5 py-3 text-[15px] text-ink transition focus:border-teal focus:outline-none focus:ring-[3px] focus:ring-teal-soft" />
+                    <div class="mt-1.5 text-[12.5px] text-ink-faint">A post, reel, or carousel from your connected account.</div>
                 </div>
-                <div class="field">
-                    <label for="ruleCatchphrase">Catchphrase</label>
-                    <input type="text" id="ruleCatchphrase" placeholder="GUIDE" required />
-                    <div class="field-hint">Comments matching this text trigger the DM.</div>
+                <div class="mb-[18px]">
+                    <label for="ruleCatchphrase" class="mb-[7px] block font-mono text-xs uppercase tracking-wide text-ink-soft">Catchphrase</label>
+                    <input type="text" id="ruleCatchphrase" placeholder="GUIDE" required
+                        class="w-full rounded-sm border border-line-strong bg-surface px-3.5 py-3 text-[15px] text-ink transition focus:border-teal focus:outline-none focus:ring-[3px] focus:ring-teal-soft" />
+                    <div class="mt-1.5 text-[12.5px] text-ink-faint">Comments matching this text trigger the DM.</div>
                 </div>
-                <div class="field">
-                    <label style="margin-bottom:0;">Case sensitive</label>
-                    <label class="rule-toggle" style="margin-top:8px;">
-                        <span class="switch">
-                            <input type="checkbox" id="ruleCaseSensitive" />
-                            <span class="track"></span>
+                <div class="mb-[18px]">
+                    <label class="mb-0 block font-mono text-xs uppercase tracking-wide text-ink-soft">Case sensitive</label>
+                    <label class="mt-2 flex cursor-pointer items-center gap-2 text-[12.5px] text-ink-soft">
+                        <span class="relative inline-flex h-[22px] w-10 flex-none cursor-pointer">
+                            <input type="checkbox" id="ruleCaseSensitive" class="peer absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0" />
+                            <span class="pointer-events-none absolute inset-0 rounded-full bg-line-strong transition-colors duration-150 peer-checked:bg-teal after:absolute after:left-[3px] after:top-[3px] after:h-4 after:w-4 after:rounded-full after:bg-surface after:transition-transform after:duration-150 after:content-[''] peer-checked:after:translate-x-[18px]"></span>
                         </span>
                         <span id="ruleCaseSensitiveLabel">Off — matches any case</span>
                     </label>
-                    <div class="field-hint">On: "GUIDE" only matches "GUIDE". Off: matches "guide", "Guide",
-                        "GUIDE".</div>
+                    <div class="mt-1.5 text-[12.5px] text-ink-faint">On: "GUIDE" only matches "GUIDE". Off: matches "guide", "Guide", "GUIDE".</div>
                 </div>
-                <div class="field">
-                    <label for="ruleReply">Public reply <span
-                            style="text-transform:none; font-weight:400;">(optional)</span></label>
-                    <div id="replyVariants" style="display:flex; flex-direction:column; gap:8px;"></div>
-                    <button type="button" class="btn btn-ghost btn-sm" id="addReplyVariantBtn" style="margin-top:6px;">+
-                        Add variant</button>
-                    <div class="field-hint">Zephyr picks one at random for the public reply, if any are set.</div>
+                <div class="mb-[18px]">
+                    <label for="ruleReply" class="mb-[7px] block font-mono text-xs uppercase tracking-wide text-ink-soft">Public reply <span class="normal-case font-normal">(optional)</span></label>
+                    <div id="replyVariants" class="flex flex-col gap-2"></div>
+                    <button type="button" id="addReplyVariantBtn" class="mt-1.5 inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 font-display text-[13.5px] font-semibold text-ink-soft transition hover:bg-teal/[0.06]">+ Add variant</button>
+                    <div class="mt-1.5 text-[12.5px] text-ink-faint">Zephyr picks one at random for the public reply, if any are set.</div>
                 </div>
-                <div class="field">
-                    <label>DM message(s)</label>
-                    <div id="dmVariants" style="display:flex; flex-direction:column; gap:8px;"></div>
-                    <button type="button" class="btn btn-ghost btn-sm" id="addVariantBtn" style="margin-top:6px;">+ Add
-                        variant</button>
-                    <div class="field-hint">Zephyr picks one at random. Add multiple for variety.</div>
+                <div class="mb-[18px]">
+                    <label class="mb-[7px] block font-mono text-xs uppercase tracking-wide text-ink-soft">DM message(s)</label>
+                    <div id="dmVariants" class="flex flex-col gap-2"></div>
+                    <button type="button" id="addVariantBtn" class="mt-1.5 inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 font-display text-[13.5px] font-semibold text-ink-soft transition hover:bg-teal/[0.06]">+ Add variant</button>
+                    <div class="mt-1.5 text-[12.5px] text-ink-faint">Zephyr picks one at random. Add multiple for variety.</div>
                 </div>
-                <div class="field" id="ruleActiveField" style="display:none;">
-                    <label style="margin-bottom:0;">Status</label>
-                    <label class="rule-toggle" style="margin-top:8px;">
-                        <span class="switch">
-                            <input type="checkbox" id="ruleActive" checked />
-                            <span class="track"></span>
+                <div id="ruleActiveField" class="mb-[18px] hidden">
+                    <label class="mb-0 block font-mono text-xs uppercase tracking-wide text-ink-soft">Status</label>
+                    <label class="mt-2 flex cursor-pointer items-center gap-2 text-[12.5px] text-ink-soft">
+                        <span class="relative inline-flex h-[22px] w-10 flex-none cursor-pointer">
+                            <input type="checkbox" id="ruleActive" checked class="peer absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0" />
+                            <span class="pointer-events-none absolute inset-0 rounded-full bg-line-strong transition-colors duration-150 peer-checked:bg-teal after:absolute after:left-[3px] after:top-[3px] after:h-4 after:w-4 after:rounded-full after:bg-surface after:transition-transform after:duration-150 after:content-[''] peer-checked:after:translate-x-[18px]"></span>
                         </span>
                         <span id="ruleActiveLabel">Active</span>
                     </label>
                 </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-ghost" id="ruleCancelBtn">Cancel</button>
-                    <button type="submit" class="btn btn-accent" id="ruleSubmitBtn">Save rule</button>
+                <div class="mt-[22px] flex justify-end gap-2.5">
+                    <button type="button" id="ruleCancelBtn" class="inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2.5 font-display text-sm font-semibold text-ink-soft transition hover:bg-teal/[0.06]">Cancel</button>
+                    <button type="submit" id="ruleSubmitBtn" class="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-[22px] py-[13px] font-display text-[15px] font-semibold text-[#150014] shadow-glow-accent transition duration-150 hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg disabled:pointer-events-none disabled:opacity-55">Save rule</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Delete confirmation modal -->
-    <div class="modal-overlay" id="confirmModalOverlay">
-        <div class="modal" style="max-width:400px;">
-            <div class="modal-head">
-                <h2 id="confirmTitle">Are you sure?</h2>
-                <button class="modal-close" id="confirmClose" aria-label="Close">&times;</button>
+    <!-- ============ Delete confirmation modal ============ -->
+    <div id="confirmModalOverlay" class="fixed inset-0 z-[100] hidden items-start justify-center overflow-y-auto bg-[rgba(7,7,13,0.6)] px-5 py-[6vh] backdrop-blur-[2px]">
+        <div class="w-full max-w-[400px] rounded-lg bg-surface p-[30px_30px_26px] shadow-pop">
+            <div class="mb-5 flex items-center justify-between">
+                <h2 id="confirmTitle" class="m-0 font-display text-[19px] font-semibold text-ink">Are you sure?</h2>
+                <button id="confirmClose" aria-label="Close" class="p-1 text-xl leading-none text-ink-faint transition hover:text-ink">&times;</button>
             </div>
-            <p id="confirmBody">This action can't be undone.</p>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-ghost" id="confirmCancelBtn">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmOkBtn">Confirm</button>
+            <p id="confirmBody" class="text-ink-soft">This action can't be undone.</p>
+            <div class="mt-[22px] flex justify-end gap-2.5">
+                <button type="button" id="confirmCancelBtn" class="inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2.5 font-display text-sm font-semibold text-ink-soft transition hover:bg-teal/[0.06]">Cancel</button>
+                <button type="button" id="confirmOkBtn" class="inline-flex items-center justify-center gap-2 rounded-md border border-danger-line bg-transparent px-3.5 py-2.5 font-display text-sm font-semibold text-danger transition hover:bg-danger-soft">Confirm</button>
             </div>
         </div>
     </div>

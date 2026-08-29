@@ -7,10 +7,13 @@ async function main(): Promise<void> {
 
   function showError(message: string): void {
     panel.innerHTML = `
-      <div class="state-icon">⚠️</div>
-      <h1>Connection failed</h1>
-      <p>${escapeHtml(message)}</p>
-      <a class="btn btn-accent btn-block" href="index.html" style="margin-top:14px;">
+      <div class="mb-3.5 text-3xl">⚠️</div>
+      <h1 class="mb-2 font-display text-xl font-semibold text-ink">Connection failed</h1>
+      <p class="text-ink-soft">${escapeHtml(message)}</p>
+      <a
+        class="mt-3.5 inline-flex w-full items-center justify-center gap-2 rounded-md bg-accent px-5 py-3 font-display text-[15px] font-semibold text-[#150014] shadow-glow-accent transition hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg"
+        href="index.html"
+      >
         Back to Zephyr
       </a>
     `;

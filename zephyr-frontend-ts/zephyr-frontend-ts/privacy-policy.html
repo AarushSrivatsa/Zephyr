@@ -8,26 +8,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css" />
-<style>
-  body{ display:flex; justify-content:center; padding: 60px 20px; }
-  .wrap{ width:100%; max-width:640px; }
-  .wordmark{
-    display:inline-flex; align-items:center; gap:10px;
-    font-family: var(--font-display); font-weight:700; font-size:22px;
-    text-decoration:none; color: var(--ink); margin-bottom: 30px;
-  }
-  h1{ font-size:24px; }
-  h2{ font-size:16px; margin-top:34px; color: var(--teal); }
-  p, li{ color: var(--ink-soft); font-size:14.5px; }
-  ul{ padding-left: 20px; }
-  li{ margin-bottom: 8px; }
-  .updated{ font-size:12.5px; color: var(--ink-faint); font-family: var(--font-mono); margin-bottom: 30px; }
-  a{ color: var(--teal); }
-</style>
 </head>
-<body>
-  <div class="wrap">
-    <a class="wordmark" href="/">
+<body class="flex justify-center bg-bg px-5 py-16 font-body text-ink antialiased">
+  <div class="w-full max-w-[640px]">
+    <a class="mb-[30px] inline-flex items-center gap-2.5 font-display text-[22px] font-bold text-ink" href="/">
       <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
         <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF2EE0" stroke-width="2" stroke-linecap="round"/>
         <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#00F0FF" stroke-width="2" stroke-linecap="round"/>
@@ -35,48 +19,48 @@
       Zephyr
     </a>
 
-    <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: August 26, 2026</p>
+    <h1 class="font-display text-2xl font-semibold text-ink">Privacy Policy</h1>
+    <p class="mb-[30px] mt-1.5 font-mono text-[12.5px] text-ink-faint">Last updated: August 26, 2026</p>
 
-    <p>Zephyr ("we", "our", "the app") is a comment-to-DM automation tool for Instagram professional accounts. This page explains what data we collect through your connected Instagram account, why we collect it, how long we keep it, and how you can delete it.</p>
+    <p class="mb-4 text-[14.5px] leading-relaxed text-ink-soft">Zephyr ("we", "our", "the app") is a comment-to-DM automation tool for Instagram professional accounts. This page explains what data we collect through your connected Instagram account, why we collect it, how long we keep it, and how you can delete it.</p>
 
-    <h2>What we collect</h2>
-    <ul>
-      <li><strong>Instagram profile info:</strong> your Instagram user ID, username, and profile picture URL, obtained when you connect your account via Instagram Login.</li>
-      <li><strong>Instagram access token:</strong> a long-lived access token, stored encrypted at rest, used solely to read comments on your posts, send the DMs and public replies you configure, and refresh itself before expiry.</li>
-      <li><strong>Rules you create:</strong> the post link, catchphrase, DM message variants, and optional public reply text you configure in the dashboard.</li>
-      <li><strong>Comment and DM activity logs:</strong> the Instagram comment ID and commenter ID for each comment that triggers a rule, used to avoid sending duplicate DMs for the same comment.</li>
-      <li><strong>Billing status:</strong> your subscription status and next billing date, managed through our payment processor, Dodo Payments. We do not receive or store your card details — Dodo handles payment collection directly.</li>
-      <li><strong>Session tokens:</strong> access and refresh tokens issued by Zephyr itself, used to keep you signed in to the dashboard.</li>
+    <h2 class="mt-[34px] font-display text-base font-semibold text-teal">What we collect</h2>
+    <ul class="mb-4 list-disc space-y-2 pl-5 text-[14.5px] leading-relaxed text-ink-soft">
+      <li><strong class="text-ink">Instagram profile info:</strong> your Instagram user ID, username, and profile picture URL, obtained when you connect your account via Instagram Login.</li>
+      <li><strong class="text-ink">Instagram access token:</strong> a long-lived access token, stored encrypted at rest, used solely to read comments on your posts, send the DMs and public replies you configure, and refresh itself before expiry.</li>
+      <li><strong class="text-ink">Rules you create:</strong> the post link, catchphrase, DM message variants, and optional public reply text you configure in the dashboard.</li>
+      <li><strong class="text-ink">Comment and DM activity logs:</strong> the Instagram comment ID and commenter ID for each comment that triggers a rule, used to avoid sending duplicate DMs for the same comment.</li>
+      <li><strong class="text-ink">Billing status:</strong> your subscription status and next billing date, managed through our payment processor, Dodo Payments. We do not receive or store your card details — Dodo handles payment collection directly.</li>
+      <li><strong class="text-ink">Session tokens:</strong> access and refresh tokens issued by Zephyr itself, used to keep you signed in to the dashboard.</li>
     </ul>
 
-    <h2>How we use it</h2>
-    <p>We use this data exclusively to operate the core function of the app: detecting when someone comments a catchphrase you've configured on one of your posts, and automatically sending that commenter the DM message you wrote, with an optional public reply. We do not sell, rent, or share your data with advertisers, and we do not use your Instagram data to train any AI or machine learning model.</p>
+    <h2 class="mt-[34px] font-display text-base font-semibold text-teal">How we use it</h2>
+    <p class="mb-4 text-[14.5px] leading-relaxed text-ink-soft">We use this data exclusively to operate the core function of the app: detecting when someone comments a catchphrase you've configured on one of your posts, and automatically sending that commenter the DM message you wrote, with an optional public reply. We do not sell, rent, or share your data with advertisers, and we do not use your Instagram data to train any AI or machine learning model.</p>
 
-    <h2>Who we share data with</h2>
-    <ul>
-      <li><strong>Meta / Instagram:</strong> to send DMs and replies on your behalf, via the Instagram Graph API, using the permissions you granted when connecting your account.</li>
-      <li><strong>Dodo Payments:</strong> our payment processor, to handle subscription billing.</li>
-      <li><strong>Our hosting and database providers</strong> (Render and Neon), who store the data described above on our behalf and do not use it for any purpose of their own.</li>
+    <h2 class="mt-[34px] font-display text-base font-semibold text-teal">Who we share data with</h2>
+    <ul class="mb-4 list-disc space-y-2 pl-5 text-[14.5px] leading-relaxed text-ink-soft">
+      <li><strong class="text-ink">Meta / Instagram:</strong> to send DMs and replies on your behalf, via the Instagram Graph API, using the permissions you granted when connecting your account.</li>
+      <li><strong class="text-ink">Dodo Payments:</strong> our payment processor, to handle subscription billing.</li>
+      <li><strong class="text-ink">Our hosting and database providers</strong> (Render and Neon), who store the data described above on our behalf and do not use it for any purpose of their own.</li>
     </ul>
 
-    <h2>Data retention and deletion</h2>
-    <p>You can disconnect your account and permanently delete your data at any time from the <a href="/data-deletion">Delete Your Data</a> page. Doing so immediately:</p>
-    <ul>
+    <h2 class="mt-[34px] font-display text-base font-semibold text-teal">Data retention and deletion</h2>
+    <p class="mb-4 text-[14.5px] leading-relaxed text-ink-soft">You can disconnect your account and permanently delete your data at any time from the <a href="/data-deletion" class="text-teal hover:underline">Delete Your Data</a> page. Doing so immediately:</p>
+    <ul class="mb-4 list-disc space-y-2 pl-5 text-[14.5px] leading-relaxed text-ink-soft">
       <li>Revokes Zephyr's access to your Instagram account and unsubscribes from webhooks</li>
       <li>Signs you out of all sessions and deletes your session tokens</li>
       <li>Removes your stored Instagram access token</li>
     </ul>
-    <p>Your account and associated rules, comment logs, and profile info are then permanently deleted from our database within <strong>30 days</strong>.</p>
+    <p class="mb-4 text-[14.5px] leading-relaxed text-ink-soft">Your account and associated rules, comment logs, and profile info are then permanently deleted from our database within <strong class="text-ink">30 days</strong>.</p>
 
-    <h2>Your rights</h2>
-    <p>You can request access to, correction of, or deletion of your data at any time by contacting us using the email below, in addition to using the self-serve deletion option described above.</p>
+    <h2 class="mt-[34px] font-display text-base font-semibold text-teal">Your rights</h2>
+    <p class="mb-4 text-[14.5px] leading-relaxed text-ink-soft">You can request access to, correction of, or deletion of your data at any time by contacting us using the email below, in addition to using the self-serve deletion option described above.</p>
 
-    <h2>Changes to this policy</h2>
-    <p>If we make material changes to this policy, we'll update the date at the top of this page. Continued use of Zephyr after changes take effect constitutes acceptance of the updated policy.</p>
+    <h2 class="mt-[34px] font-display text-base font-semibold text-teal">Changes to this policy</h2>
+    <p class="mb-4 text-[14.5px] leading-relaxed text-ink-soft">If we make material changes to this policy, we'll update the date at the top of this page. Continued use of Zephyr after changes take effect constitutes acceptance of the updated policy.</p>
 
-    <h2>Contact</h2>
-    <p>Questions about this policy or your data can be sent to <a href="mailto:support@zephyr-m5w7.onrender.com">support@zephyr-m5w7.onrender.com</a>.</p>
+    <h2 class="mt-[34px] font-display text-base font-semibold text-teal">Contact</h2>
+    <p class="mb-4 text-[14.5px] leading-relaxed text-ink-soft">Questions about this policy or your data can be sent to <a href="mailto:support@zephyr-m5w7.onrender.com" class="text-teal hover:underline">support@zephyr-m5w7.onrender.com</a>.</p>
   </div>
 </body>
 </html>
