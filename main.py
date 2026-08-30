@@ -7,7 +7,7 @@ from utils.http_client import client
 from routers.payments import router as payments_router
 from routers.user import router as user_router
 from routers.webhook import router as instagram_router
-from routers.rules import routercl as rules_router
+from routers.rules import router as rules_router
 from utils.background_tasks import scheduler, refresh_instagram_tokens, wipe_deleted_users, sync_instagram_profiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
