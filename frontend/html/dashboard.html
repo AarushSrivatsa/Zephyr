@@ -10,7 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="/css/tailwind.css" />
 </head>
 
 <body class="min-h-screen bg-bg font-body text-ink antialiased">
@@ -19,21 +19,23 @@
     <div id="authGate" class="mx-auto mt-[14vh] hidden w-full max-w-[420px] rounded-lg border border-line bg-surface p-8 text-center shadow-card">
         <h1 class="font-display text-[19px] font-semibold text-ink">Sign in required</h1>
         <p class="mb-4 mt-2 text-ink-soft">Connect your Instagram account to view your dashboard.</p>
-        <a class="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-[22px] py-[13px] font-display text-[15px] font-semibold text-[#150014] shadow-glow-accent transition duration-150 hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg" href="index.html">Back to Zephyr</a>
+        <a class="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-[22px] py-[13px] font-display text-[15px] font-semibold text-[#150014] shadow-glow-accent transition duration-150 hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg" href="/">Back to Zephyr</a>
     </div>
 
     <div class="hidden min-h-screen md:grid md:grid-cols-[232px_1fr]" id="app">
 
         <!-- ============ RAIL ============ -->
         <aside class="sticky top-0 flex h-auto flex-row items-center gap-4 border-b border-line bg-surface px-4 py-3.5 md:h-screen md:flex-col md:items-stretch md:gap-0 md:border-b-0 md:border-r md:py-[22px]">
-            <a class="flex items-center gap-2.5 px-2 font-display text-lg font-bold text-ink md:pb-[22px] md:pt-1.5" href="index.html">
-                <svg width="22" height="22" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+            <a class="flex items-center gap-2.5 px-2 font-display text-lg font-bold text-ink md:pb-[22px] md:pt-1.5" href="/">
+                <img src="/assets/zephyr-logo.png" alt="" data-fallback class="h-[22px] w-[22px] flex-none object-contain" />
+                <svg width="22" height="22" viewBox="0 0 26 26" fill="none" aria-hidden="true" class="hidden">
                     <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF2EE0"
                         stroke-width="2" stroke-linecap="round" />
                     <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#00F0FF"
                         stroke-width="2" stroke-linecap="round" />
                 </svg>
-                Zephyr
+                <img src="/assets/zephyr-font.png" alt="Zephyr" data-fallback class="h-4 w-auto object-contain" />
+                <span class="hidden">Zephyr</span>
             </a>
 
             <nav class="flex flex-1 flex-row gap-1 overflow-x-auto md:flex-col md:overflow-visible">
@@ -222,7 +224,8 @@
         </div>
     </div>
 
-    <script type="module" src="js/dashboard.js"></script>
+    <script type="module" src="/js/asset-fallback.js"></script>
+    <script type="module" src="/js/dashboard.js"></script>
 </body>
 
 </html>

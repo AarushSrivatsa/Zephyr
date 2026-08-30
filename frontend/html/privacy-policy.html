@@ -7,16 +7,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="/css/tailwind.css" />
 </head>
 <body class="flex justify-center bg-bg px-5 py-16 font-body text-ink antialiased">
   <div class="w-full max-w-[640px]">
     <a class="mb-[30px] inline-flex items-center gap-2.5 font-display text-[22px] font-bold text-ink" href="/">
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+      <img src="/assets/zephyr-logo.png" alt="" data-fallback class="h-[26px] w-[26px] flex-none object-contain" />
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true" class="hidden">
         <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF2EE0" stroke-width="2" stroke-linecap="round"/>
         <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#00F0FF" stroke-width="2" stroke-linecap="round"/>
       </svg>
-      Zephyr
+      <img src="/assets/zephyr-font.png" alt="Zephyr" data-fallback class="h-[18px] w-auto object-contain" />
+      <span class="hidden">Zephyr</span>
     </a>
 
     <h1 class="font-display text-2xl font-semibold text-ink">Privacy Policy</h1>
@@ -62,5 +64,6 @@
     <h2 class="mt-[34px] font-display text-base font-semibold text-teal">Contact</h2>
     <p class="mb-4 text-[14.5px] leading-relaxed text-ink-soft">Questions about this policy or your data can be sent to <a href="mailto:support@zephyr-m5w7.onrender.com" class="text-teal hover:underline">support@zephyr-m5w7.onrender.com</a>.</p>
   </div>
+  <script type="module" src="/js/asset-fallback.js"></script>
 </body>
 </html>

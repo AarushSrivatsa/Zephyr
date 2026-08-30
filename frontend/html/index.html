@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<!-- Signed-in visitors never see the marketing page — bounce them to the
+     dashboard before anything paints. Reads the same localStorage key
+     api.ts uses, so it needs no bundle/module load to decide. -->
+<script>
+  try {
+    if (localStorage.getItem("zephyr_access_token")) {
+      location.replace("/dashboard");
+    }
+  } catch (e) {}
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zephyr — Auto-reply and DM anyone who comments your keyword</title>
+<meta name="description" content="Set a keyword on any Instagram post. The moment someone comments it, Zephyr replies and DMs them automatically." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/tailwind.css" />
+</head>
+<body class="min-h-screen bg-bg font-body text-ink antialiased">
+
+<!-- ============ NAV ============ -->
+<header class="sticky top-0 z-50 border-b border-line/60 bg-bg/80 backdrop-blur">
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-10">
+    <a class="flex items-center gap-2 font-display text-lg font-bold tracking-tight text-ink" href="/" aria-label="Zephyr">
+      <!-- logo mark — drop /assets/zephyr-logo.png in; falls back to this mark if it's missing -->
+      <img src="/assets/zephyr-logo.png" alt="" data-fallback class="h-6 w-6 flex-none object-contain" />
+      <svg width="24" height="24" viewBox="0 0 26 26" fill="none" aria-hidden="true" class="hidden [filter:drop-shadow(0_0_6px_rgba(255,46,224,0.45))]">
+        <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF2EE0" stroke-width="2" stroke-linecap="round"/>
+        <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#00F0FF" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <!-- logo wordmark — drop /assets/zephyr-font.png in; falls back to plain text if it's missing -->
+      <img src="/assets/zephyr-font.png" alt="Zephyr" data-fallback class="h-5 w-auto object-contain" />
+      <span class="hidden">Zephyr</span>
+    </a>
+    <nav class="flex items-center gap-6">
+      <a href="#pricing" class="hidden font-mono text-[12.5px] tracking-wide text-ink-faint transition hover:text-ink-soft sm:inline">Pricing</a>
+      <button
+        id="navConnectBtn"
+        class="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-4 py-2 font-display text-[13.5px] font-semibold text-[#150014] shadow-glow-accent transition duration-150 hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg"
+      >
+        <img src="/assets/instagram-logo.png" alt="" data-fallback class="h-4 w-4 flex-none object-contain" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden h-4 w-4 flex-none" aria-hidden="true">
+          <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle>
+        </svg>
+        Login with Instagram
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ============ HERO ============ -->
+  <section class="relative overflow-hidden bg-landing-glow px-6 pb-20 pt-16 sm:px-10 sm:pt-24">
+    <div class="mx-auto max-w-3xl text-center">
+      <span class="inline-flex items-center gap-2 font-mono text-[12.5px] uppercase tracking-[0.12em] text-teal before:h-[7px] before:w-[7px] before:flex-none before:rounded-full before:bg-accent before:shadow-[0_0_8px_theme(colors.accent.DEFAULT)]">
+        Instagram comment automation
+      </span>
+
+      <h1 class="mt-6 font-display text-[clamp(1.9rem,5vw,3rem)] font-bold leading-[1.12] tracking-tight text-ink [text-shadow:0_0_24px_rgba(0,240,255,0.2)]">
+        Automatically reply and DM anyone who comments a keyword on your post.
+      </h1>
+
+      <p class="mx-auto mt-5 max-w-xl text-[15.5px] leading-relaxed text-ink-soft">
+        Pick a post, set the keyword, write the DM. Zephyr watches the comments and fires
+        the message the instant it matches — no manual follow-up, ever.
+      </p>
+
+      <!-- ===== inline workflow — the whole mechanism, visible with zero scrolling ===== -->
+      <div id="workflowRow" class="mx-auto mt-9 flex max-w-xl flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-center sm:gap-3">
+        <div data-chip class="flex-1 rounded-md border px-4 py-3 text-left text-sm transition-colors duration-500 sm:text-center">
+          <span class="block font-mono text-[10.5px] uppercase tracking-wide text-ink-faint">1 · They comment</span>
+          <span class="mt-0.5 block font-medium text-ink">"GUIDE" on your post</span>
+        </div>
+        <span class="hidden font-display text-lg text-ink-faint sm:block" aria-hidden="true">→</span>
+        <span class="block text-center font-display text-lg text-ink-faint sm:hidden" aria-hidden="true">↓</span>
+        <div data-chip class="flex-1 rounded-md border px-4 py-3 text-left text-sm transition-colors duration-500 sm:text-center">
+          <span class="block font-mono text-[10.5px] uppercase tracking-wide text-ink-faint">2 · Zephyr matches it</span>
+          <span class="mt-0.5 block font-medium text-ink">Instantly, in real time</span>
+        </div>
+        <span class="hidden font-display text-lg text-ink-faint sm:block" aria-hidden="true">→</span>
+        <span class="block text-center font-display text-lg text-ink-faint sm:hidden" aria-hidden="true">↓</span>
+        <div data-chip class="flex-1 rounded-md border px-4 py-3 text-left text-sm transition-colors duration-500 sm:text-center">
+          <span class="block font-mono text-[10.5px] uppercase tracking-wide text-ink-faint">3 · They get it</span>
+          <span class="mt-0.5 block font-medium text-ink">Your DM + optional reply</span>
+        </div>
+      </div>
+
+      <div class="mt-9 flex flex-wrap items-center justify-center gap-3.5">
+        <button
+          id="heroConnectBtn"
+          class="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-6 py-[14px] font-display text-[15px] font-semibold text-[#150014] shadow-glow-accent transition duration-150 hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg"
+        >
+          <img src="/assets/instagram-logo.png" alt="" data-fallback class="h-[18px] w-[18px] flex-none object-contain" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden h-[18px] w-[18px] flex-none" aria-hidden="true">
+            <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle>
+          </svg>
+          Login with Instagram
+        </button>
+        <span class="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface px-4 py-[13px] font-mono text-[12.5px] tracking-wide text-ink-soft">
+          🎉 7-day free trial · then $1/week · cancel anytime
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS (detail, for anyone who wants it) ============ -->
+  <section id="how-it-works" class="border-t border-line/60 px-6 py-20 sm:px-10">
+    <div class="mx-auto max-w-5xl">
+      <div class="mx-auto max-w-xl text-center">
+        <span class="font-mono text-[12.5px] uppercase tracking-[0.12em] text-teal">The details</span>
+        <h2 class="mt-3 font-display text-[1.6rem] font-semibold tracking-tight text-ink">Three steps, then it runs itself</h2>
+      </div>
+
+      <ol class="mt-12 grid gap-8 sm:grid-cols-3">
+        <li class="relative rounded-lg border border-line bg-surface p-7 shadow-card">
+          <span class="font-mono text-xs text-ink-faint">01</span>
+          <h3 class="mt-3 font-display text-lg font-semibold text-ink">Set a keyword</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-soft">Link a post and choose the word or phrase people need to comment — "GUIDE", "LINK", whatever fits.</p>
+        </li>
+        <li class="relative rounded-lg border border-line bg-surface p-7 shadow-card">
+          <span class="font-mono text-xs text-ink-faint">02</span>
+          <h3 class="mt-3 font-display text-lg font-semibold text-ink">Someone comments it</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-soft">Zephyr watches your posts in real time and catches the match the instant it's posted.</p>
+        </li>
+        <li class="relative rounded-lg border border-line bg-surface p-7 shadow-card">
+          <span class="font-mono text-xs text-ink-faint">03</span>
+          <h3 class="mt-3 font-display text-lg font-semibold text-ink">Zephyr sends the DM</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-soft">Your message lands in their inbox automatically, with an optional public reply too.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ PRICING ============ -->
+  <section id="pricing" class="border-t border-line/60 px-6 py-20 sm:px-10">
+    <div class="mx-auto max-w-md text-center">
+      <span class="font-mono text-[12.5px] uppercase tracking-[0.12em] text-teal">Pricing</span>
+      <h2 class="mt-3 font-display text-[1.6rem] font-semibold tracking-tight text-ink">One plan. No surprises.</h2>
+
+      <div class="mt-10 rounded-lg border border-line-strong bg-surface p-8 text-left shadow-pop">
+        <div class="flex items-baseline gap-1.5">
+          <span class="font-display text-4xl font-bold text-ink">$1</span>
+          <span class="font-mono text-sm text-ink-faint">/ week</span>
+        </div>
+        <p class="mt-2 text-sm text-ink-soft">Unlimited rules, unlimited DMs, on every connected post.</p>
+
+        <ul class="mt-6 flex flex-col gap-3 text-sm text-ink-soft">
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-teal">✓</span> 7-day free trial, no card required upfront
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-teal">✓</span> Unlimited keywords and DM variants
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-teal">✓</span> Optional public replies alongside every DM
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-teal">✓</span> Cancel anytime, data deleted within 30 days
+          </li>
+        </ul>
+
+        <button
+          id="pricingConnectBtn"
+          class="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-md bg-accent px-5 py-[13px] font-display text-[15px] font-semibold text-[#150014] shadow-glow-accent transition duration-150 hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg"
+        >
+          <img src="/assets/instagram-logo.png" alt="" data-fallback class="h-[18px] w-[18px] flex-none object-contain" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden h-[18px] w-[18px] flex-none" aria-hidden="true">
+            <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle>
+          </svg>
+          Start your free trial
+        </button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="border-t border-line/60 px-6 py-10 sm:px-10">
+  <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
+    <p class="font-mono text-xs text-ink-faint">© 2026 Zephyr. All rights reserved.</p>
+    <div class="flex items-center gap-5">
+      <a href="/privacy-policy" class="font-mono text-xs tracking-wide text-ink-faint transition hover:text-ink-soft">Privacy policy</a>
+      <a href="/data-deletion" class="font-mono text-xs tracking-wide text-ink-faint transition hover:text-ink-soft">Delete your data</a>
+      <a href="mailto:support@zephyr-m5w7.onrender.com" class="font-mono text-xs tracking-wide text-ink-faint transition hover:text-ink-soft">Contact</a>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="/js/asset-fallback.js"></script>
+<script type="module" src="/js/landing.js"></script>
+</body>
+</html>

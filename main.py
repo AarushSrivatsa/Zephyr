@@ -7,7 +7,7 @@ from utils.http_client import client
 from routers.payments import router as payments_router
 from routers.user import router as user_router
 from routers.webhook import router as instagram_router
-from routers.rules import router as rules_router
+from routers.rules import routercl as rules_router
 from utils.background_tasks import scheduler, refresh_instagram_tokens, wipe_deleted_users, sync_instagram_profiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -36,9 +36,11 @@ for router in router_list:
     app.include_router(router)
 
 # ---------------------------------------------------------------
-# Frontend (built by the Docker image into /app/frontend)
+# Frontend (built by the Docker image into /app/static — not /app/frontend,
+# since /app/frontend is the raw source tree copied in by `COPY . .` and
+# reusing that name would mix the built output in with the TS/HTML source).
 # ---------------------------------------------------------------
-FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
+STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
 # Custom static file class that disables caching, so a fresh deploy is
 # always picked up immediately instead of the browser/Cloudflare serving
@@ -51,8 +53,13 @@ class NoCacheStaticFiles(StaticFiles):
         response.headers["Expires"] = "0"
         return response
 
-app.mount("/css", NoCacheStaticFiles(directory=os.path.join(FRONTEND_DIR, "css")), name="css")
-app.mount("/js", NoCacheStaticFiles(directory=os.path.join(FRONTEND_DIR, "js")), name="js")
+app.mount("/css", NoCacheStaticFiles(directory=os.path.join(STATIC_DIR, "css")), name="css")
+app.mount("/js", NoCacheStaticFiles(directory=os.path.join(STATIC_DIR, "js")), name="js")
+# Brand images (instagram-logo.png, zephyr-logo.png, zephyr-font.png, ...).
+# Until real files are dropped into frontend/assets/, requests here 404 and
+# the pages fall back to their built-in placeholder mark/wordmark — see
+# ts/asset-fallback.ts.
+app.mount("/assets", NoCacheStaticFiles(directory=os.path.join(STATIC_DIR, "assets")), name="assets")
 
 # ---------------------------------------------------------------
 # Clean URLs: every canonical page has exactly one clean path.
@@ -63,7 +70,7 @@ app.mount("/js", NoCacheStaticFiles(directory=os.path.join(FRONTEND_DIR, "js")),
 
 @app.get("/", include_in_schema=False)
 async def serve_index():
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 @app.get("/index.html", include_in_schema=False)
 async def redirect_index_html():
@@ -71,7 +78,7 @@ async def redirect_index_html():
 
 @app.get("/dashboard", include_in_schema=False)
 async def serve_dashboard():
-    return FileResponse(os.path.join(FRONTEND_DIR, "dashboard.html"))
+    return FileResponse(os.path.join(STATIC_DIR, "dashboard.html"))
 
 @app.get("/dashboard.html", include_in_schema=False)
 async def redirect_dashboard_html():
@@ -80,11 +87,11 @@ async def redirect_dashboard_html():
 @app.get("/login-callback.html", include_in_schema=False)
 @app.get("/callback", include_in_schema=False)
 async def serve_login_callback():
-    return FileResponse(os.path.join(FRONTEND_DIR, "login-callback.html"))
+    return FileResponse(os.path.join(STATIC_DIR, "login-callback.html"))
 
 @app.get("/privacy-policy", include_in_schema=False)
 async def serve_privacy_policy():
-    return FileResponse(os.path.join(FRONTEND_DIR, "privacy-policy.html"))
+    return FileResponse(os.path.join(STATIC_DIR, "privacy-policy.html"))
 
 @app.get("/privacy-policy.html", include_in_schema=False)
 async def redirect_privacy_policy_html():
@@ -92,7 +99,7 @@ async def redirect_privacy_policy_html():
 
 @app.get("/data-deletion", include_in_schema=False)
 async def serve_data_deletion():
-    return FileResponse(os.path.join(FRONTEND_DIR, "data-deletion.html"))
+    return FileResponse(os.path.join(STATIC_DIR, "data-deletion.html"))
 
 @app.get("/data-deletion.html", include_in_schema=False)
 async def redirect_data_deletion_html():

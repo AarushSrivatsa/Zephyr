@@ -2,11 +2,11 @@
 FROM node:20-alpine AS frontend-build
 WORKDIR /frontend
 
-COPY zephyr-frontend-ts/zephyr-frontend-ts/package.json zephyr-frontend-ts/zephyr-frontend-ts/package-lock.json* ./
+COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm install
 
-COPY zephyr-frontend-ts/zephyr-frontend-ts/ ./
-RUN npm run build   # tsc: src/*.ts -> js/*.js, tailwindcss: css/tailwind.css -> css/style.css
+COPY frontend/ ./
+RUN npm run build   # tsc: ts/*.ts -> js/*.js, tailwindcss: css/input.css -> css/tailwind.css
 
 # ---- stage 2: python backend + built frontend ----
 FROM python:3.12-slim
@@ -18,15 +18,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# assemble the static frontend the backend will serve
-RUN mkdir -p frontend/css frontend/js
-COPY zephyr-frontend-ts/zephyr-frontend-ts/index.html frontend/
-COPY zephyr-frontend-ts/zephyr-frontend-ts/dashboard.html frontend/
-COPY zephyr-frontend-ts/zephyr-frontend-ts/login-callback.html frontend/
-COPY zephyr-frontend-ts/zephyr-frontend-ts/privacy-policy.html frontend/
-COPY zephyr-frontend-ts/zephyr-frontend-ts/data-deletion.html frontend/
-COPY --from=frontend-build /frontend/css/style.css frontend/css/style.css
-COPY --from=frontend-build /frontend/js/ frontend/js/
+# assemble the static frontend the backend will serve (flat — main.py maps
+# each clean URL to a specific file in this directory by name)
+RUN mkdir -p static/css static/js static/assets
+COPY frontend/html/index.html static/
+COPY frontend/html/dashboard.html static/
+COPY frontend/html/login-callback.html static/
+COPY frontend/html/privacy-policy.html static/
+COPY frontend/html/data-deletion.html static/
+COPY frontend/assets/ static/assets/
+COPY --from=frontend-build /frontend/css/tailwind.css static/css/tailwind.css
+COPY --from=frontend-build /frontend/js/ static/js/
 
 EXPOSE 8000
 

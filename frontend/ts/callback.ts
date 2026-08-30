@@ -12,7 +12,7 @@ async function main(): Promise<void> {
       <p class="text-ink-soft">${escapeHtml(message)}</p>
       <a
         class="mt-3.5 inline-flex w-full items-center justify-center gap-2 rounded-md bg-accent px-5 py-3 font-display text-[15px] font-semibold text-[#150014] shadow-glow-accent transition hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg"
-        href="index.html"
+        href="/"
       >
         Back to Zephyr
       </a>

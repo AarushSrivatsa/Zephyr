@@ -2,8 +2,8 @@
 __pycache__/
 .env
 .git/
-zephyr-frontend-ts/zephyr-frontend-ts/node_modules/
-zephyr-frontend-ts/zephyr-frontend-ts/js/
-zephyr-frontend-ts/zephyr-frontend-ts/css/style.css
+frontend/node_modules/
+frontend/js/
+frontend/css/tailwind.css
 *.pyc
 *.log
