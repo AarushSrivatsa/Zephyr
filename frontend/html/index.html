@@ -26,48 +26,44 @@
   <section class="relative w-full max-w-3xl overflow-hidden bg-landing-glow text-center">
     <div class="mx-auto max-w-3xl">
 
-      <!-- logo — the actual anchor of the page, sized like one -->
-      <a href="/" class="inline-flex flex-col items-center gap-1.5" aria-label="Zephyr">
-        <span class="inline-flex items-center gap-2.5">
-          <img src="/assets/zephyr-logo.png" alt="" data-fallback class="h-14 w-14 flex-none object-contain" />
-          <svg width="52" height="52" viewBox="0 0 26 26" fill="none" aria-hidden="true" class="hidden [filter:drop-shadow(0_0_6px_rgba(255,46,224,0.45))]">
-            <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF2EE0" stroke-width="2" stroke-linecap="round"/>
-            <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#00F0FF" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <img src="/assets/zephyr-font.png" alt="Zephyr" data-fallback class="h-9 w-auto object-contain" />
-          <span class="hidden font-display text-4xl font-bold text-ink">Zephyr</span>
-        </span>
-        <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
-          Instagram comment automation
-        </span>
+      <!-- logo — this IS the hero now, sized like a real brand mark -->
+      <a href="/" class="inline-flex items-center justify-center gap-3.5" aria-label="Zephyr">
+        <img src="/assets/zephyr-logo.png" alt="" data-fallback class="h-20 w-20 flex-none object-contain sm:h-24 sm:w-24" />
+        <svg width="88" height="88" viewBox="0 0 26 26" fill="none" aria-hidden="true" class="hidden [filter:drop-shadow(0_0_10px_rgba(255,46,224,0.45))] sm:h-24 sm:w-24">
+          <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF2EE0" stroke-width="2" stroke-linecap="round"/>
+          <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#00F0FF" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <img src="/assets/zephyr-font.png" alt="Zephyr" data-fallback class="h-14 w-auto object-contain sm:h-16" />
+        <span class="hidden font-display text-6xl font-bold text-ink sm:text-7xl">Zephyr</span>
       </a>
 
-      <h1 class="mx-auto mt-7 max-w-xl font-display text-[clamp(1.8rem,4.5vw,2.7rem)] font-bold leading-[1.14] tracking-tight text-ink [text-shadow:0_0_24px_rgba(0,240,255,0.2)]">
+      <!-- caption, not a headline -->
+      <p class="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-ink-soft">
         Automatically reply and DM anyone who comments a keyword on your post.
-      </h1>
+      </p>
 
-      <!-- ===== the whole mechanism, in one glance ===== -->
-      <div id="workflowRow" class="mx-auto mt-8 flex max-w-xl flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-center sm:gap-3">
+      <!-- ===== precise steps — what a rule actually is, and what Zephyr does with it ===== -->
+      <div id="workflowRow" class="mx-auto mt-9 flex max-w-xl flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-center sm:gap-3">
         <div data-chip class="flex-1 rounded-md border px-4 py-2.5 text-left text-sm transition-colors duration-500 sm:text-center">
-          <span class="block font-mono text-[10.5px] uppercase tracking-wide text-ink-faint">1 · They comment</span>
-          <span class="mt-0.5 block font-medium text-ink">"GUIDE" on your post</span>
+          <span class="block font-mono text-[10.5px] uppercase tracking-wide text-ink-faint">1 · Set your rule</span>
+          <span class="mt-0.5 block font-medium text-ink">Catchphrase + reply + DM messages</span>
         </div>
         <span class="hidden font-display text-lg text-ink-faint sm:block" aria-hidden="true">→</span>
         <span class="block text-center font-display text-lg text-ink-faint sm:hidden" aria-hidden="true">↓</span>
         <div data-chip class="flex-1 rounded-md border px-4 py-2.5 text-left text-sm transition-colors duration-500 sm:text-center">
           <span class="block font-mono text-[10.5px] uppercase tracking-wide text-ink-faint">2 · Zephyr matches it</span>
-          <span class="mt-0.5 block font-medium text-ink">Instantly, in real time</span>
+          <span class="mt-0.5 block font-medium text-ink">Instantly, the moment it's posted</span>
         </div>
         <span class="hidden font-display text-lg text-ink-faint sm:block" aria-hidden="true">→</span>
         <span class="block text-center font-display text-lg text-ink-faint sm:hidden" aria-hidden="true">↓</span>
         <div data-chip class="flex-1 rounded-md border px-4 py-2.5 text-left text-sm transition-colors duration-500 sm:text-center">
-          <span class="block font-mono text-[10.5px] uppercase tracking-wide text-ink-faint">3 · They get it</span>
-          <span class="mt-0.5 block font-medium text-ink">Zephyr's DM + optional reply</span>
+          <span class="block font-mono text-[10.5px] uppercase tracking-wide text-ink-faint">3 · Sends the rule</span>
+          <span class="mt-0.5 block font-medium text-ink">Their DM + your reply, automatically</span>
         </div>
       </div>
 
       <!-- ===== the one button on this page ===== -->
-      <div class="mt-8 flex flex-col items-center gap-3">
+      <div class="mt-9 flex flex-col items-center gap-3">
         <button
           id="connectBtn"
           disabled
@@ -91,14 +87,14 @@
           </span>
         </label>
 
-        <!-- pricing — text set by landing.ts from config.ts's PRICE_DISPLAY -->
-        <span id="priceLabel" class="font-mono text-[12px] tracking-wide text-ink-faint"></span>
+        <!-- pricing — bigger, actually visible, not the dimmest text on the page -->
+        <span id="priceLabel" class="font-mono text-[13.5px] font-medium tracking-wide text-teal"></span>
       </div>
     </div>
   </section>
 </main>
 
-<!-- ============ FOOTER — no privacy-policy link (already above, once) ============ -->
+<!-- ============ FOOTER ============ -->
 <footer class="border-t border-line/60 px-6 py-7 sm:px-10">
   <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
     <p class="font-mono text-xs text-ink-faint">© 2026 Zephyr. All rights reserved.</p>
