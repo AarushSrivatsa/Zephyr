@@ -4,9 +4,18 @@
 // index.html's <head>, before this module even loads — so everything below
 // only ever runs for a signed-out visitor.
 import { loginUrl } from "./api.js";
+import { PRICE_DISPLAY } from "./config.js"
 
 const connectBtn = document.getElementById("connectBtn") as HTMLButtonElement | null;
 const consentCheckbox = document.getElementById("privacyConsent") as HTMLInputElement | null;
+const priceLabel = document.getElementById("priceLabel");
+
+// Price varies per locale and gets set later — one config value
+// (config.ts -> PRICE_DISPLAY) drives this line instead of it being
+// hardcoded in the HTML.
+if (priceLabel) {
+  priceLabel.textContent = `7-day free trial · then ${PRICE_DISPLAY} · cancel anytime`;
+}
 
 if (connectBtn && consentCheckbox) {
   // Button starts disabled (see index.html); only enabled once the

@@ -7,3 +7,8 @@ export const API_BASE_URL = "";
 // app. Must be publicly reachable and MUST match the backend's REDIRECT_URI
 // env var exactly.
 export const OAUTH_CALLBACK_URL = `${window.location.origin}/login-callback.html`;
+
+// Price shown on the landing page after the trial ends. Placeholder until
+// real per-locale pricing is wired up (billing is monthly, not weekly, and
+// varies by region) — edit this one line rather than the HTML/TS.
+export const PRICE_DISPLAY = "your local price/month";
