@@ -5,12 +5,20 @@
 // only ever runs for a signed-out visitor.
 import { loginUrl } from "./api.js";
 
-function goConnect(): void {
-  window.location.href = loginUrl();
-}
+const connectBtn = document.getElementById("connectBtn") as HTMLButtonElement | null;
+const consentCheckbox = document.getElementById("privacyConsent") as HTMLInputElement | null;
 
-for (const id of ["heroConnectBtn", "navConnectBtn", "pricingConnectBtn"]) {
-  document.getElementById(id)?.addEventListener("click", goConnect);
+if (connectBtn && consentCheckbox) {
+  // Button starts disabled (see index.html); only enabled once the
+  // person has explicitly agreed to the privacy policy.
+  consentCheckbox.addEventListener("change", () => {
+    connectBtn.disabled = !consentCheckbox.checked;
+  });
+
+  connectBtn.addEventListener("click", () => {
+    if (!consentCheckbox.checked) return; // guard, shouldn't fire while disabled
+    window.location.href = loginUrl();
+  });
 }
 
 // ---------------------------------------------------------------
