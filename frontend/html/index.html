@@ -20,33 +20,37 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/tailwind.css" />
 </head>
-<body class="min-h-screen bg-bg font-body text-ink antialiased">
+<!-- bg-landing-glow lives on body now (full-viewport, fades to black at
+     the edges) instead of on the inner section — it was previously scoped
+     to the content box, so it rendered as a hard-edged rectangle floating
+     on the black page instead of covering the screen. -->
+<body class="min-h-screen bg-bg bg-landing-glow font-body text-ink antialiased">
 
 <main class="flex min-h-screen items-center justify-center px-6 py-14 sm:px-10">
-  <section class="relative w-full max-w-3xl overflow-hidden bg-landing-glow text-center">
-    <div class="mx-auto max-w-3xl">
+  <div class="mx-auto w-full max-w-3xl text-center">
 
-      <!-- logo — this IS the hero now, sized like a real brand mark -->
-      <a href="/" class="inline-flex items-center justify-center gap-3.5" aria-label="Zephyr">
-        <img src="/assets/zephyr-logo.png" alt="" data-fallback class="h-20 w-20 flex-none object-contain sm:h-24 sm:w-24" />
-        <svg width="88" height="88" viewBox="0 0 26 26" fill="none" aria-hidden="true" class="hidden [filter:drop-shadow(0_0_10px_rgba(255,46,224,0.45))] sm:h-24 sm:w-24">
-          <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF2EE0" stroke-width="2" stroke-linecap="round"/>
-          <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#00F0FF" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <img src="/assets/zephyr-font.png" alt="Zephyr" data-fallback class="h-14 w-auto object-contain sm:h-16" />
-        <span class="hidden font-display text-6xl font-bold text-ink sm:text-7xl">Zephyr</span>
-      </a>
+    <!-- logo — the hero -->
+    <a href="/" class="inline-flex items-center justify-center gap-3.5" aria-label="Zephyr">
+      <img src="/assets/zephyr-logo.png" alt="" data-fallback class="h-20 w-20 flex-none object-contain sm:h-24 sm:w-24" />
+      <svg width="88" height="88" viewBox="0 0 26 26" fill="none" aria-hidden="true" class="hidden [filter:drop-shadow(0_0_10px_rgba(255,46,224,0.45))] sm:h-24 sm:w-24">
+        <path d="M2 9.5C6 9.5 6 5 11 5c3.6 0 3.6 3 6.4 3 2.4 0 2.4-2 4.6-2" stroke="#FF2EE0" stroke-width="2" stroke-linecap="round"/>
+        <path d="M2 14.5C7 14.5 7 18.5 12.5 18.5c4 0 4-3.2 7.2-3.2 2.6 0 2.6 2.2 4.8 2.2" stroke="#00F0FF" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <img src="/assets/zephyr-font.png" alt="Zephyr" data-fallback class="h-14 w-auto object-contain sm:h-16" />
+      <span class="hidden font-display text-6xl font-bold text-ink sm:text-7xl">Zephyr</span>
+    </a>
 
-      <!-- caption, not a headline -->
-      <p class="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-ink-soft">
-        Automatically reply and DM anyone who comments a keyword on your post.
-      </p>
+    <!-- caption, right under the logo -->
+    <p class="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-ink-soft">
+      Automatically <span class="font-semibold text-teal">reply</span> and <span class="font-semibold text-accent">DM</span> anyone who comments a keyword on your post.
+    </p>
 
-      <!-- ===== precise steps — what a rule actually is, and what Zephyr does with it ===== -->
-      <div id="workflowRow" class="mx-auto mt-9 flex max-w-xl flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-center sm:gap-3">
+    <!-- ===== the three steps, as one cohesive panel — not loose boxes on black ===== -->
+    <div class="mx-auto mt-9 max-w-xl rounded-lg border border-line bg-surface/70 p-4 shadow-card sm:p-5">
+      <div id="workflowRow" class="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-center sm:gap-3">
         <div data-chip class="flex-1 rounded-md border px-4 py-2.5 text-left text-sm transition-colors duration-500 sm:text-center">
           <span class="block font-mono text-[10.5px] uppercase tracking-wide text-ink-faint">1 · Set your rule</span>
-          <span class="mt-0.5 block font-medium text-ink">Catchphrase + reply + DM messages</span>
+          <span class="mt-0.5 block font-medium text-ink">Catchphrase + replies + DM messages</span>
         </div>
         <span class="hidden font-display text-lg text-ink-faint sm:block" aria-hidden="true">→</span>
         <span class="block text-center font-display text-lg text-ink-faint sm:hidden" aria-hidden="true">↓</span>
@@ -57,41 +61,40 @@
         <span class="hidden font-display text-lg text-ink-faint sm:block" aria-hidden="true">→</span>
         <span class="block text-center font-display text-lg text-ink-faint sm:hidden" aria-hidden="true">↓</span>
         <div data-chip class="flex-1 rounded-md border px-4 py-2.5 text-left text-sm transition-colors duration-500 sm:text-center">
-          <span class="block font-mono text-[10.5px] uppercase tracking-wide text-ink-faint">3 · Sends the rule</span>
-          <span class="mt-0.5 block font-medium text-ink">Their DM + your reply, automatically</span>
+          <span class="block font-mono text-[10.5px] uppercase tracking-wide text-ink-faint">3 · Zephyr sends it</span>
+          <span class="mt-0.5 block font-medium text-ink">DM + public reply, automatically</span>
         </div>
       </div>
-
-      <!-- ===== the one button on this page ===== -->
-      <div class="mt-9 flex flex-col items-center gap-3">
-        <button
-          id="connectBtn"
-          disabled
-          class="inline-flex items-center justify-center gap-2 rounded-md bg-accent px-6 py-[13px] font-display text-[15px] font-semibold text-[#150014] shadow-glow-accent transition duration-150 hover:-translate-y-px hover:bg-accent-deep hover:shadow-glow-accent-lg disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none"
-        >
-          <img src="/assets/instagram-logo.png" alt="" data-fallback class="h-[18px] w-[18px] flex-none object-contain" />
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden h-[18px] w-[18px] flex-none" aria-hidden="true">
-            <rect x="2" y="2" width="20" height="20" rx="5"></rect>
-            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle>
-          </svg>
-          Login with Instagram
-        </button>
-
-        <!-- the ONLY privacy-policy link on this page -->
-        <label class="flex cursor-pointer items-start gap-2 text-left font-mono text-[12px] tracking-wide text-ink-faint">
-          <input type="checkbox" id="privacyConsent" class="mt-0.5 h-3.5 w-3.5 flex-none cursor-pointer accent-teal" />
-          <span>
-            I agree to the
-            <a href="/privacy-policy" target="_blank" rel="noopener" class="text-teal hover:underline">Privacy Policy</a>
-          </span>
-        </label>
-
-        <!-- pricing — bigger, actually visible, not the dimmest text on the page -->
-        <span id="priceLabel" class="font-mono text-[13.5px] font-medium tracking-wide text-teal"></span>
-      </div>
     </div>
-  </section>
+
+    <!-- ===== price, then the one button, then consent ===== -->
+    <div class="mt-8 flex flex-col items-center gap-3.5">
+      <span id="priceLabel" class="inline-flex items-center rounded-full border border-teal/30 bg-teal-soft px-4 py-1.5 font-mono text-[12.5px] font-medium tracking-wide text-teal"></span>
+
+      <button
+        id="connectBtn"
+        disabled
+        class="inline-flex items-center justify-center gap-2.5 rounded-full border border-line-strong bg-surface px-6 py-[13px] font-display text-[15px] font-semibold text-ink shadow-card transition duration-150 hover:-translate-y-px hover:border-teal hover:shadow-glow-teal disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none"
+      >
+        <img src="/assets/instagram-logo.png" alt="" data-fallback class="h-5 w-5 flex-none object-contain" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden h-5 w-5 flex-none" aria-hidden="true">
+          <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle>
+        </svg>
+        Login with Instagram
+      </button>
+
+      <!-- the ONLY privacy-policy link on this page -->
+      <label class="flex cursor-pointer items-start gap-2 text-left font-mono text-[12px] tracking-wide text-ink-faint">
+        <input type="checkbox" id="privacyConsent" class="mt-0.5 h-3.5 w-3.5 flex-none cursor-pointer accent-teal" />
+        <span>
+          I agree to the
+          <a href="/privacy-policy" target="_blank" rel="noopener" class="text-teal hover:underline">Privacy Policy</a>
+        </span>
+      </label>
+    </div>
+  </div>
 </main>
 
 <!-- ============ FOOTER ============ -->
