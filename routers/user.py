@@ -58,7 +58,7 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
 
     # Step 2: Exchange for long-lived token
     long_lived_response = await client.get(
-        'https://graph.instagram.com/refresh_access_token',
+        'https://graph.instagram.com/access_token',
         params={
             'grant_type': 'ig_exchange_token',
             'client_secret': CLIENT_SECRET,
