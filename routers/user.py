@@ -97,7 +97,7 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
         existing_user.encrypted_instagram_access_token = encrypted_token
         existing_user.instagram_token_expires_at = token_expires_at
         existing_user.username = user_data['username']
-        existing_user.profile_pic_url = user_data['profile_picture_url']
+        existing_user.profile_pic_url = user_data.get('profile_picture_url','')
         existing_user.deleted_at = None  # restore soft-deleted accounts
     else:
         db.add(UserModel(
