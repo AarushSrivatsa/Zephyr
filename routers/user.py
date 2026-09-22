@@ -103,7 +103,7 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
         db.add(UserModel(
             user_id=user_data['user_id'],
             username=user_data['username'],
-            profile_pic_url=user_data.get('profile_picture_url','')
+            profile_pic_url=user_data.get('profile_picture_url',''),
             encrypted_instagram_access_token=encrypted_token,
             instagram_token_expires_at=token_expires_at
         ))
