@@ -32,7 +32,7 @@ async def instagram_login():
 @router.get('/instagram_callback')
 async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
     # Step 1: Exchange code for short-lived token
-    short_lived_response = await client.get(
+    short_lived_response = await client.post(
         'https://api.instagram.com/oauth/access_token',
         data={
             'client_id': CLIENT_ID,
@@ -58,7 +58,7 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
 
     # Step 2: Exchange for long-lived token
     long_lived_response = await client.get(
-        'https://graph.instagram.com/access_token',
+        'https://graph.instagram.com/refresh_access_token',
         params={
             'grant_type': 'ig_exchange_token',
             'client_secret': CLIENT_SECRET,
@@ -72,8 +72,6 @@ async def instagram_callback(code: str, db: AsyncSession = Depends(get_db)):
     long_lived_token = long_lived_data['access_token']
 
     expires_in_seconds = long_lived_data.get('expires_in', 5184000)  # fallback ~60 days if missing
-
-    expires_in_seconds = long_lived_data['expires_in']
 
     # Step 3: Fetch user info
     user_response = await client.get(
