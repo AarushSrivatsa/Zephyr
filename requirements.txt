@@ -13,3 +13,4 @@ dodopayments
 apscheduler
 cloudflare
 python-multipart
+sqlalchemy[asyncio]
