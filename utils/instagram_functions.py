@@ -141,7 +141,7 @@ async def process_webhook(data: dict, db: AsyncSession):
                 continue
 
             print(f'Sleeping 60s before sending DM for comment {comment_id}')
-            await asyncio.sleep(60)
+            await asyncio.sleep(random.randint(60,180))
 
             access_token = decrypt(rule.user.encrypted_instagram_access_token)
             message = random.choice(rule.dm_message)
