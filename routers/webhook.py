@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Query, HTTPException, status, Request, Depends, BackgroundTasks
+from fastapi import APIRouter, Query, HTTPException, status, Request, BackgroundTasks
 from fastapi.responses import PlainTextResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-from database.initialization import get_db
 from utils.instagram_functions import process_webhook
 from settings import VERIFY_TOKEN, CLIENT_SECRET
 import hmac
@@ -23,11 +21,7 @@ async def verify_webhook(
 
 
 @router.post('/webhook')
-async def receive_webhook(
-    request: Request,
-    background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db)
-):
+async def receive_webhook(request: Request, background_tasks: BackgroundTasks):
     body = await request.body()
     print(f'Webhook received — headers: {dict(request.headers)}')
     print(f'Webhook body: {body.decode()}')
@@ -35,9 +29,11 @@ async def receive_webhook(
     sig_header = request.headers.get('X-Hub-Signature-256', '')
     expected = 'sha256=' + hmac.new(CLIENT_SECRET.encode(), body, hashlib.sha256).hexdigest()
     print(f'Signature header: {sig_header}')
-    print(f'Expected signature: {expected}')
 
-    if not hmac.compare_digest(sig_header, expected):
+    signature_ok = hmac.compare_digest(sig_header.encode(), expected.encode())
+    print(f'Signature valid: {signature_ok}')
+
+    if not signature_ok:
         print('Signature mismatch — rejecting webhook')
         raise HTTPException(status_code=403, detail='Invalid signature')
 
@@ -49,5 +45,5 @@ async def receive_webhook(
         return {'status': 'ignored'}
 
     print('Queuing webhook for background processing')
-    background_tasks.add_task(process_webhook, data, db)
+    background_tasks.add_task(process_webhook, data)   # no db passed in anymore
     return {'status': 'ok'}
