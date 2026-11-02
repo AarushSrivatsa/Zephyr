@@ -1,235 +1,383 @@
-from utils.http_client import client
-from utils.encryption import decrypt
-from database.initialization import AsyncSessionLocal
-from database.models import RuleModel, DMLogsModel
-from sqlalchemy import select, update, or_
+"""
+Comment -> DM automation.
+
+Flow for every webhook delivery:
+
+  1. process_webhook   pulls comments out of the payload, drops duplicates,
+                       and opens ONE short DB session to find matching rules.
+                       Session is closed before anything slow happens.
+  2. _handle_comment   (one task per matched comment, run in parallel)
+                       sleeps 60-120s with NO db session open, then takes a
+                       per-owner lock.
+  3. _prepare_send     inside the lock: a NEW short DB session re-checks the
+                       rule / subscription / duplicates, copies out plain
+                       values, and closes.
+  4. send_dm / send_reply   network calls, still no DB session open.
+  5. _save_log         another NEW short session, only to write the log row
+                       and bump the rule's counter.
+
+Concurrency model:
+  * different account owners  -> fully parallel
+  * same account owner        -> the check -> send -> log section is serialized
+                                 by a lock keyed on owner id, so two tasks can
+                                 never both see "not DMed yet" and both send.
+"""
+import asyncio
+import random
+import weakref
+from collections import defaultdict
+from datetime import datetime, timezone
+from typing import NamedTuple
+
+from sqlalchemy import and_, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
-import random
-import asyncio
+
+from database.initialization import AsyncSessionLocal
+from database.models import DMLogsModel, RuleModel, UserModel
+from utils.encryption import decrypt
+from utils.http_client import client
+from utils.logging_config import get_logger
+
+log = get_logger("dm")
 
 MIN_DELAY = 60
 MAX_DELAY = 120
+HTTP_TIMEOUT = 15.0
+GRAPH_URL = "https://graph.instagram.com/v25.0"
 
 # comment_ids this process is already handling (guards against duplicate deliveries)
 _in_flight: set[str] = set()
 
+# One lock per account owner. Weak values: a lock disappears on its own once
+# nobody is holding or waiting on it, so this dict never grows forever.
+_owner_locks: "weakref.WeakValueDictionary[str, asyncio.Lock]" = weakref.WeakValueDictionary()
 
-async def send_dm(ig_user_id: str, comment_id: str, message: str, access_token: str) -> bool:
+
+# ----------------------------------------------------------------------------
+# small data holders (plain values only, safe to use after a session is closed)
+# ----------------------------------------------------------------------------
+class _Comment(NamedTuple):
+    text: str
+    media_id: str
+    comment_id: str
+    commenter_id: str
+    commenter_name: str  # "@bob", or the raw id if Instagram didn't send a username
+
+
+class _Job(NamedTuple):
+    comment: _Comment
+    rule_id: int
+    owner_id: str
+    owner_name: str  # "@shop"
+
+
+class _ReadyToSend(NamedTuple):
+    ig_user_id: str
+    access_token: str
+    dm_text: str
+    reply_text: str | None
+
+
+# ----------------------------------------------------------------------------
+# helpers
+# ----------------------------------------------------------------------------
+def _owner_lock(owner_id: str) -> asyncio.Lock:
+    lock = _owner_locks.get(owner_id)
+    if lock is None:
+        lock = asyncio.Lock()
+        _owner_locks[owner_id] = lock
+    return lock
+
+
+def _matches(rule: RuleModel, text: str) -> bool:
+    if rule.is_case_sensitive:
+        return text == rule.catchphrase
+    return text.casefold() == rule.catchphrase.casefold()
+
+
+def _owner_block_reason(owner: UserModel) -> str | None:
+    """Why this owner's rules must not fire right now (None = all good)."""
+    if owner.deleted_at is not None:
+        return "account was deleted"
+    if not owner.encrypted_instagram_access_token:
+        return "no Instagram token connected"
+    sub = owner.subscription
+    if sub is None:
+        return "no subscription"
+    billing = sub.next_billing_date
+    if billing.tzinfo is None:
+        billing = billing.replace(tzinfo=timezone.utc)
+    if billing < datetime.now(timezone.utc):
+        return "subscription lapsed"
+    return None
+
+
+# ----------------------------------------------------------------------------
+# Instagram API calls (no DB session is ever open while these run)
+# ----------------------------------------------------------------------------
+async def send_dm(ig_user_id: str, comment_id: str, message: str, access_token: str, who: str) -> bool:
     try:
         response = await client.post(
-            f'https://graph.instagram.com/v25.0/{ig_user_id}/messages',
-            json={
-                'recipient': {'comment_id': comment_id},
-                'message': {'text': message}
-            },
-            params={'access_token': access_token}
+            f"{GRAPH_URL}/{ig_user_id}/messages",
+            json={"recipient": {"comment_id": comment_id}, "message": {"text": message}},
+            params={"access_token": access_token},
+            timeout=HTTP_TIMEOUT,
         )
-        print(f'send_dm status: {response.status_code}, body: {response.text}')
-        if response.status_code != 200:
-            print(f'DM failed for comment {comment_id}: {response.text}')
-            return False
-        print(f'DM sent for comment {comment_id}')
-        return True
     except Exception as e:
-        print(f'send_dm exception for comment {comment_id}: {e}')
+        # only the exception type: httpx messages can echo the URL (which carries the token)
+        log.error("❌ DM to %s failed — network error (%s)", who, type(e).__name__)
         return False
 
+    if response.status_code != 200:
+        log.error("❌ DM to %s failed — HTTP %s: %s", who, response.status_code, response.text[:300])
+        return False
+    return True
 
-async def send_reply(comment_id: str, message: str, access_token: str):
+
+async def send_reply(comment_id: str, message: str, access_token: str, who: str) -> bool:
     try:
         response = await client.post(
-            f'https://graph.instagram.com/v25.0/{comment_id}/replies',
-            params={'message': message, 'access_token': access_token}
+            f"{GRAPH_URL}/{comment_id}/replies",
+            params={"message": message, "access_token": access_token},
+            timeout=HTTP_TIMEOUT,
         )
-        print(f'send_reply status: {response.status_code}, body: {response.text}')
-        if response.status_code != 200:
-            print(f'Reply failed for comment {comment_id}: {response.text}')
-        else:
-            print(f'Reply sent for comment {comment_id}')
     except Exception as e:
-        print(f'send_reply exception for comment {comment_id}: {e}')
+        log.warning("⚠️ Public reply to %s failed — network error (%s)", who, type(e).__name__)
+        return False
+
+    if response.status_code != 200:
+        log.warning("⚠️ Public reply to %s failed — HTTP %s: %s", who, response.status_code, response.text[:300])
+        return False
+    return True
 
 
-async def _handle_comment(rule_id: int, media_id: str, comment_id: str, commenter_id: str):
-    """Waits with no DB session, re-checks the rule, sends, then opens a new session to save the log."""
-    tag = f'[{comment_id}]'
-    try:
-        # ---- 1. wait: NO database session is open here ----
-        delay = random.randint(MIN_DELAY, MAX_DELAY)
-        print(f'{tag} No DB session open. Sleeping {delay}s before sending')
-        await asyncio.sleep(delay)
+# ----------------------------------------------------------------------------
+# per-comment pipeline
+# ----------------------------------------------------------------------------
+async def _prepare_send(job: _Job) -> _ReadyToSend | None:
+    """Fresh short DB session: re-check everything after the sleep, copy out what we need, close."""
+    c = job.comment
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(RuleModel)
+            .options(selectinload(RuleModel.user).selectinload(UserModel.subscription))
+            .where(RuleModel.id == job.rule_id)
+        )
+        rule = result.scalar_one_or_none()
 
-        # ---- 2. short session: re-check everything, copy what we need, close ----
-        print(f'{tag} Woke up. Opening fresh DB session to re-check rule {rule_id}')
-        async with AsyncSessionLocal() as db:
-            result = await db.execute(
-                select(RuleModel)
-                .options(selectinload(RuleModel.user))
-                .where(RuleModel.id == rule_id)
-            )
-            rule = result.scalar_one_or_none()
+        if rule is None:
+            log.info("🗑️ Skipped %s — rule #%s was deleted while waiting", c.commenter_name, job.rule_id)
+            return None
+        if not rule.is_active:
+            log.info("⏸️ Skipped %s — rule #%s was paused while waiting", c.commenter_name, rule.id)
+            return None
+        if rule.media_id != c.media_id or not _matches(rule, c.text):
+            log.info("✏️ Skipped %s — rule #%s was edited while waiting and no longer matches", c.commenter_name, rule.id)
+            return None
 
-            if rule is None:
-                print(f'{tag} Rule {rule_id} was deleted while waiting, skipping')
-                return
-            if not rule.is_active:
-                print(f'{tag} Rule {rule_id} was paused while waiting, skipping')
-                return
-            if not rule.user.encrypted_instagram_access_token:
-                print(f'{tag} User {rule.user.user_id} has no token anymore, skipping')
-                return
+        reason = _owner_block_reason(rule.user)
+        if reason:
+            log.warning("🚫 Skipped %s — %s: %s", c.commenter_name, job.owner_name, reason)
+            return None
 
-            already = await db.execute(
-                select(DMLogsModel.id).where(
-                    or_(
-                        DMLogsModel.comment_id == comment_id,
-                        (DMLogsModel.commenter_ig_id == commenter_id) & (DMLogsModel.rule_id == rule_id)
-                    )
-                ).limit(1)
-            )
-            if already.first() is not None:
-                print(f'{tag} Already DMed (this comment, or this commenter for this rule), skipping')
-                return
+        if not rule.dm_message:
+            log.error("❌ Skipped %s — rule #%s has no DM message", c.commenter_name, rule.id)
+            return None
 
-            # copy everything needed so we can close the session before any network call
-            access_token = decrypt(rule.user.encrypted_instagram_access_token)
-            message = random.choice(rule.dm_message)
-            reply_text = random.choice(rule.reply_message) if rule.reply_message else None
-            ig_user_id = rule.user.user_id
-        print(f'{tag} DB session closed. Checks passed')
-
-        # ---- 3. network calls: still no DB session open ----
-        print(f'{tag} Sending DM, message: {message}')
-        sent = await send_dm(ig_user_id, comment_id, message, access_token)
-
-        if not sent:
-            print(f'{tag} DM failed, nothing saved, skipping')
-            return
-
-        if reply_text:
-            print(f'{tag} Sending public reply')
-            await send_reply(comment_id, reply_text, access_token)
-
-        # ---- 4. new short session just to save the sent log ----
-        print(f'{tag} Opening new DB session to save sent log')
-        async with AsyncSessionLocal() as db:
-            db.add(DMLogsModel(
-                commenter_ig_id=commenter_id,
-                media_id=media_id,
-                comment_id=comment_id,
-                rule_id=rule_id
-            ))
-            await db.execute(
-                update(RuleModel).where(RuleModel.id == rule_id).values(count=RuleModel.count + 1)
-            )
-            try:
-                await db.commit()
-            except IntegrityError:
-                await db.rollback()
-                print(f'{tag} Log already existed (duplicate task), count not incremented')
-                return
-        print(f'{tag} Successfully processed, log saved and count incremented')
-
-    except Exception as e:
-        print(f'{tag} Error while handling comment: {e}')
-
-
-async def process_webhook(data: dict):
-    ids_in_this_payload: list[str] = []
-    try:
-        print(f'process_webhook called with object: {data.get("object")}')
-
-        if data.get('object') != 'instagram':
-            print('Ignoring non-instagram webhook')
-            return
-
-        # Step 1: collect all comments from payload.
-        # comment_text keeps its ORIGINAL case, we lower() it wherever needed.
-        comments = []
-        for entry in data.get('entry', []):
-            for change in entry.get('changes', []):
-                print(f'Processing change field: {change.get("field")}')
-                if change.get('field') != 'comments':
-                    continue
-                value = change.get('value', {})
-                comment_text = value.get('text', '').strip()
-                media_id = value.get('media', {}).get('id')
-                comment_id = value.get('id')
-                commenter_id = value.get('from', {}).get('id')
-                print(f'Comment: text={comment_text}, media_id={media_id}, comment_id={comment_id}, commenter_id={commenter_id}')
-                if not all([comment_text, media_id, comment_id, commenter_id]):
-                    print('Skipping comment — missing fields')
-                    continue
-                # skips repeats inside the payload AND ones already waiting from an earlier delivery
-                if comment_id in _in_flight:
-                    print(f'Skipping {comment_id}: already being handled')
-                    continue
-                _in_flight.add(comment_id)
-                ids_in_this_payload.append(comment_id)
-                comments.append((comment_text, media_id, comment_id, commenter_id))
-
-        print(f'Total comments collected (after in-flight dedup): {len(comments)}')
-        if not comments:
-            print('No comments to process')
-            return
-
-        # Step 2: ONE short DB session for the reads, closed before any waiting
-        print('Opening DB session for duplicate check and rule lookup')
-        async with AsyncSessionLocal() as db:
-            existing = await db.execute(
-                select(DMLogsModel.comment_id)
-                .where(DMLogsModel.comment_id.in_([c[2] for c in comments]))
-            )
-            duplicate_ids = {row[0] for row in existing.fetchall()}
-            print(f'Duplicate comment_ids already in DB: {duplicate_ids}')
-            comments = [c for c in comments if c[2] not in duplicate_ids]
-            print(f'After DB dedupe: {len(comments)} comments')
-
-            if not comments:
-                print('All comments already processed')
-                return
-
-            media_ids = list({c[1] for c in comments})
-            print(f'Fetching rules for media_ids: {media_ids}')
-            rules_result = await db.execute(
-                select(RuleModel)
-                .options(selectinload(RuleModel.user))
-                .where(
-                    RuleModel.media_id.in_(media_ids),
-                    RuleModel.is_active == True
+        already = await db.execute(
+            select(DMLogsModel.id)
+            .where(
+                or_(
+                    DMLogsModel.comment_id == c.comment_id,
+                    and_(DMLogsModel.commenter_ig_id == c.commenter_id, DMLogsModel.rule_id == rule.id),
                 )
             )
-            rules = rules_result.scalars().all()
-            print(f'Rules found: {len(rules)}')
-        print('DB session closed')
+            .limit(1)
+        )
+        if already.first() is not None:
+            log.info("⏭️ Skipped %s — already DMed for rule #%s", c.commenter_name, rule.id)
+            return None
 
-        # Always key on the lowercased catchphrase, single canonical lookup
-        rule_map = {(r.media_id, r.catchphrase.lower()): r for r in rules}
-        print(f'Rule map keys: {list(rule_map.keys())}')
+        ready = _ReadyToSend(
+            ig_user_id=rule.user.user_id,
+            access_token=decrypt(rule.user.encrypted_instagram_access_token),
+            dm_text=random.choice(rule.dm_message),
+            reply_text=random.choice(rule.reply_message) if rule.reply_message else None,
+        )
+    # session is closed here
+    return ready
 
-        # Step 3: handle each comment one after another (each waits 60-120s)
-        for comment_text, media_id, comment_id, commenter_id in comments:
-            print(f'Looking up rule for media_id={media_id}, comment_text={comment_text}')
-            rule = rule_map.get((media_id, comment_text.lower()))
-            if not rule:
-                print(f'No rule found for: media_id={media_id}, text={comment_text}')
+
+async def _save_log(job: _Job) -> None:
+    """Fresh short DB session, only to record the DM and bump the counter."""
+    c = job.comment
+    async with AsyncSessionLocal() as db:
+        try:
+            db.add(
+                DMLogsModel(
+                    commenter_ig_id=c.commenter_id,
+                    media_id=c.media_id,
+                    comment_id=c.comment_id,
+                    rule_id=job.rule_id,
+                )
+            )
+            await db.flush()  # duplicate-key errors surface HERE, inside the try
+            await db.execute(
+                update(RuleModel).where(RuleModel.id == job.rule_id).values(count=RuleModel.count + 1)
+            )
+            await db.commit()
+            log.debug("📝 Log saved for %s (rule #%s)", c.commenter_name, job.rule_id)
+        except IntegrityError:
+            await db.rollback()
+            log.warning("⚠️ Log for %s already existed (rule #%s) — counter not incremented", c.commenter_name, job.rule_id)
+        except Exception:
+            await db.rollback()
+            log.exception(
+                "🚨 DM to %s WAS SENT but saving its log failed — a duplicate DM is possible",
+                c.commenter_name,
+            )
+
+
+async def _send_for_comment(job: _Job) -> None:
+    c = job.comment
+
+    ready = await _prepare_send(job)  # opens + closes its own session
+    if ready is None:
+        return
+
+    sent = await send_dm(ready.ig_user_id, c.comment_id, ready.dm_text, ready.access_token, c.commenter_name)
+    if not sent:
+        return
+    log.info("✅ DM sent → %s  (rule #%s, owner %s)", c.commenter_name, job.rule_id, job.owner_name)
+
+    if ready.reply_text and await send_reply(c.comment_id, ready.reply_text, ready.access_token, c.commenter_name):
+        log.info("💬 Public reply sent → %s  (rule #%s, owner %s)", c.commenter_name, job.rule_id, job.owner_name)
+
+    await _save_log(job)  # opens + closes its own session
+
+
+async def _handle_comment(job: _Job) -> None:
+    c = job.comment
+    try:
+        delay = random.randint(MIN_DELAY, MAX_DELAY)
+        log.info(
+            '⏳ %s commented "%s" → rule #%s (%s). DM queued, sending in %ss',
+            c.commenter_name, c.text, job.rule_id, job.owner_name, delay,
+        )
+        await asyncio.sleep(delay)  # NO database session is open during the wait
+
+        # Same owner: one at a time (check -> send -> log). Different owners: parallel.
+        async with _owner_lock(job.owner_id):
+            await _send_for_comment(job)
+
+    except asyncio.CancelledError:
+        log.warning("🛑 Shutting down — pending DM to %s (rule #%s) was dropped", c.commenter_name, job.rule_id)
+        raise
+    except Exception:
+        log.exception("💥 Unexpected error handling comment %s from %s", c.comment_id, c.commenter_name)
+
+
+# ----------------------------------------------------------------------------
+# webhook entry point
+# ----------------------------------------------------------------------------
+def _extract_comments(data: dict, claimed: list[str]) -> list[_Comment]:
+    comments: list[_Comment] = []
+    for entry in data.get("entry", []):
+        for change in entry.get("changes", []):
+            if change.get("field") != "comments":
+                continue
+            value = change.get("value") or {}
+            sender = value.get("from") or {}
+            text = (value.get("text") or "").strip()
+            media_id = (value.get("media") or {}).get("id")
+            comment_id = value.get("id")
+            commenter_id = sender.get("id")
+
+            if not all([text, media_id, comment_id, commenter_id]):
+                log.debug("Ignoring comment event with missing fields")
+                continue
+            if comment_id in _in_flight:
+                log.debug("Ignoring comment %s — already being handled", comment_id)
                 continue
 
-            # Case-sensitive rules need an exact match against the original-case text
-            if rule.is_case_sensitive and comment_text != rule.catchphrase:
-                print(f'Case-sensitive mismatch: got "{comment_text}", expected "{rule.catchphrase}"')
-                continue
+            _in_flight.add(comment_id)
+            claimed.append(comment_id)
+            username = sender.get("username")
+            comments.append(
+                _Comment(text, media_id, comment_id, commenter_id, f"@{username}" if username else str(commenter_id))
+            )
+    return comments
 
-            if not rule.user.encrypted_instagram_access_token:
-                print(f'Skipping {comment_id}: user {rule.user.user_id} has no token')
-                continue
 
-            print(f'Rule {rule.id} matched for comment {comment_id}, handing off')
-            await _handle_comment(rule.id, media_id, comment_id, commenter_id)
+async def _plan_jobs(comments: list[_Comment]) -> list[_Job]:
+    """ONE short DB session: drop already-handled comments, load rules, then close before returning."""
+    async with AsyncSessionLocal() as db:
+        existing = await db.execute(
+            select(DMLogsModel.comment_id).where(DMLogsModel.comment_id.in_([c.comment_id for c in comments]))
+        )
+        done = {row[0] for row in existing.fetchall()}
+        comments = [c for c in comments if c.comment_id not in done]
+        if not comments:
+            return []
 
-    except Exception as e:
-        print(f'Webhook processing error: {e}')
+        rules_result = await db.execute(
+            select(RuleModel)
+            .options(selectinload(RuleModel.user).selectinload(UserModel.subscription))
+            .where(
+                RuleModel.media_id.in_({c.media_id for c in comments}),
+                RuleModel.is_active.is_(True),
+            )
+        )
+        rules = rules_result.scalars().all()
+    # session is closed here — everything below is plain Python
+
+    # Several rules can share a post (e.g. "GUIDE" case-sensitive AND "guide").
+    # Case-sensitive rules go first so the most specific rule wins.
+    rules_by_media: dict[str, list[RuleModel]] = defaultdict(list)
+    for r in sorted(rules, key=lambda r: not r.is_case_sensitive):
+        rules_by_media[r.media_id].append(r)
+
+    jobs: list[_Job] = []
+    for c in comments:
+        rule = next((r for r in rules_by_media.get(c.media_id, []) if _matches(r, c.text)), None)
+        if rule is None:
+            log.debug('No rule for "%s" on media %s', c.text, c.media_id)
+            continue
+
+        owner = rule.user
+        if c.commenter_id == owner.user_id:
+            log.debug("Ignoring %s — that's the account owner's own comment", c.commenter_name)
+            continue
+
+        reason = _owner_block_reason(owner)
+        if reason:
+            log.warning("🚫 Skipped %s — @%s: %s", c.commenter_name, owner.username, reason)
+            continue
+
+        jobs.append(_Job(c, rule.id, owner.user_id, f"@{owner.username}"))
+    return jobs
+
+
+async def process_webhook(data: dict) -> None:
+    claimed: list[str] = []
+    try:
+        if data.get("object") != "instagram":
+            return
+
+        comments = _extract_comments(data, claimed)
+        if not comments:
+            return
+
+        jobs = await _plan_jobs(comments)
+        if not jobs:
+            return
+
+        log.info("📥 %s comment(s) matched a rule", len(jobs))
+        # Every job runs concurrently; jobs for the same owner queue up on that owner's lock.
+        await asyncio.gather(*(_handle_comment(job) for job in jobs), return_exceptions=True)
+
+    except Exception:
+        log.exception("💥 Webhook processing crashed")
     finally:
-        _in_flight.difference_update(ids_in_this_payload)
-        print(f'Released in-flight ids: {ids_in_this_payload}')
+        _in_flight.difference_update(claimed)

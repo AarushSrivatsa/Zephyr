@@ -1,49 +1,56 @@
-from fastapi import APIRouter, Query, HTTPException, status, Request, BackgroundTasks
-from fastapi.responses import PlainTextResponse
-from utils.instagram_functions import process_webhook
-from settings import VERIFY_TOKEN, CLIENT_SECRET
-import hmac
 import hashlib
+import hmac
 import json
 
-router = APIRouter(prefix='/instagram', tags=['Instagram'])
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request, status
+from fastapi.responses import PlainTextResponse
+
+from settings import CLIENT_SECRET, VERIFY_TOKEN
+from utils.instagram_functions import process_webhook
+from utils.logging_config import get_logger
+
+log = get_logger("webhook")
+
+# Fail at startup, not with a 500 on the first webhook.
+if not CLIENT_SECRET or not VERIFY_TOKEN:
+    raise RuntimeError("CLIENT_SECRET and VERIFY_TOKEN must be set to receive Instagram webhooks")
+
+router = APIRouter(prefix="/instagram", tags=["Instagram"])
 
 
-@router.get('/webhook')
+@router.get("/webhook")
 async def verify_webhook(
-    hub_mode: str = Query(alias='hub.mode'),
-    hub_challenge: int = Query(alias='hub.challenge'),
-    hub_verify_token: str = Query(alias='hub.verify_token')
+    hub_mode: str = Query(alias="hub.mode"),
+    hub_challenge: str = Query(alias="hub.challenge"),
+    hub_verify_token: str = Query(alias="hub.verify_token"),
 ):
-    if hub_mode == 'subscribe' and hub_verify_token == VERIFY_TOKEN:
-        return PlainTextResponse(content=str(hub_challenge))
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Verification failed')
+    token_ok = hmac.compare_digest(hub_verify_token.encode(), VERIFY_TOKEN.encode())
+    if hub_mode == "subscribe" and token_ok:
+        log.info("🔗 Webhook endpoint verified by Meta")
+        return PlainTextResponse(content=hub_challenge)
+
+    log.warning("🚫 Webhook verification failed (bad mode or verify token)")
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Verification failed")
 
 
-@router.post('/webhook')
+@router.post("/webhook")
 async def receive_webhook(request: Request, background_tasks: BackgroundTasks):
     body = await request.body()
-    print(f'Webhook received — headers: {dict(request.headers)}')
-    print(f'Webhook body: {body.decode()}')
 
-    sig_header = request.headers.get('X-Hub-Signature-256', '')
-    expected = 'sha256=' + hmac.new(CLIENT_SECRET.encode(), body, hashlib.sha256).hexdigest()
-    print(f'Signature header: {sig_header}')
+    signature = request.headers.get("X-Hub-Signature-256", "")
+    expected = "sha256=" + hmac.new(CLIENT_SECRET.encode(), body, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(signature.encode(), expected.encode()):
+        log.warning("🚫 Rejected webhook — invalid signature")
+        raise HTTPException(status_code=403, detail="Invalid signature")
 
-    signature_ok = hmac.compare_digest(sig_header.encode(), expected.encode())
-    print(f'Signature valid: {signature_ok}')
+    try:
+        data = json.loads(body)
+    except json.JSONDecodeError:
+        log.warning("⚠️ Rejected webhook — body is not valid JSON")
+        raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    if not signature_ok:
-        print('Signature mismatch — rejecting webhook')
-        raise HTTPException(status_code=403, detail='Invalid signature')
+    if data.get("object") != "instagram":
+        return {"status": "ignored"}
 
-    data = json.loads(body)
-    print(f'Webhook object type: {data.get("object")}')
-
-    if data.get('object') != 'instagram':
-        print('Ignoring non-instagram webhook')
-        return {'status': 'ignored'}
-
-    print('Queuing webhook for background processing')
-    background_tasks.add_task(process_webhook, data)   # no db passed in anymore
-    return {'status': 'ok'}
+    background_tasks.add_task(process_webhook, data)
+    return {"status": "ok"}
